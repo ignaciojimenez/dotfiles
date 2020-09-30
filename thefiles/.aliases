@@ -1,0 +1,49 @@
+#!/bin/bash
+function common {
+  # git aliases
+  alias g=git
+  alias ga='git add'
+  alias gapa='git add --patch'
+  alias gap='git apply'
+  alias gdt='git diff-tree --no-commit-id --name-only -r'
+  alias gau='git add --update'
+  alias gstp='git stash pop'
+  alias gcs='git commit -S'
+  alias glg='git log --stat'
+
+  # ls confs
+  alias ls='ls -GFlh'
+  export LSCOLORS='BxBxhxDxfxhxhxhxhxcxcx'
+
+  # grep confs
+  alias grep='grep --color=auto --exclude-dir={.git}'
+
+  # Reload the shell (i.e. invoke as a login shell)
+  alias reload="exec $SHELL -l"
+}
+
+function macos {
+  # Show/hide hidden files in Finder
+  alias showh="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
+  alias hideh="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+
+  # Send HTTP requests
+  # One of @janmoesen’s ProTip™s
+  for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
+    alias "${method}"="lwp-request -m '${method}'"
+  done
+}
+
+# setting up common aliases
+common
+
+# setting up environment specific aliases
+# reading and not executing to avoid command injection
+case "$1" in
+  "macos")
+    macos
+    ;;
+  "unix")
+    unix
+    ;;
+esac

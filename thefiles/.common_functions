@@ -1,0 +1,30 @@
+#!/bin/bash
+
+function list_include_item() {
+  local list="$1"
+  local item="$2"
+  if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]]; then
+    # yes, list include item
+    result=1
+  else
+    result=0
+  fi
+  echo $result
+}
+
+function detect_os() {
+  # detecting OS type
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    type="unix"
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    type="macos"
+  elif [[ "$OSTYPE" == "win32" ]]; then
+    type="windows"
+  elif [[ "$OSTYPE" == "freebsd"* ]]; then
+    type="unix"
+    Echo "$OSTYPE detected and using linux defaults, it might not be what you want"
+  else
+    type="unkown"
+  fi
+  echo $type
+}

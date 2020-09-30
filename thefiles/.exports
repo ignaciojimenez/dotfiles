@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Make vim the default editor.
+export EDITOR='vim';
+
+# Make Python use UTF-8 encoding for output to stdin, stdout, and stderr.
+export PYTHONIOENCODING='UTF-8';
+
+# Increase Bash history size. Allow 10K entries; the default is 2000.
+export HISTSIZE='10000';
+# Omit duplicates and commands that begin with a space from history.
+export HISTCONTROL='ignoreboth';
+
+# Prefer US English and use UTF-8.
+export LANG='en_US.UTF-8';
+export LC_ALL='en_US.UTF-8';
+
+# Highlight section titles in manual pages.
+export LESS_TERMCAP_md="$(tput bold; tput setaf 3)";
+
+# Don’t clear the screen after quitting a manual page.
+export MANPAGER='less -X';
+
+# Avoid issues with `gpg` as installed via Homebrew.
+# https://stackoverflow.com/a/42265848/96656
+export GPG_TTY=$(tty);

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+function common_profile {
+  # shellcheck disable=SC2129
+  echo >> "$1"
+  echo "# exporting some env variables" >> "$1"
+  echo "source .exports" >> "$1"
+  echo >> "$1"
+  echo "# common bash functions used in scripts" >> "$1"
+  echo "source .common_functions" >> "$1"
+  echo >> "$1"
+  echo "# importing aliases" >> "$1"
+  echo "source .aliases \$(detect_os)" >> "$1"
+}
+
+function custom_profile {
+  # detecting command line input
+  case "$1" in
+  "zsh")
+    echo >> "$1"
+    echo "plugins=(git)" >> "$1"
+    ;;
+  "bash")
+    :
+    ;;
+  "csh")
+    :
+    ;;
+  "ksh")
+    :
+    ;;
+  *)
+    echo "Invalid shell detected. Exiting..."
+    exit 1
+    ;;
+  esac
+}
+
+
+bash_profile=".bash_profile"
+csh_profile=".cshrc"
+zsh_profile=".zshrc"
+ksh_profile=".kshrc"
+dotfile_folder="$PWD/thefiles"
+
+function writeprofile {
+  profile=$1
+  echo "$HOME/$profile exists, storing backup in ${HOME}/${profile}_bkp"
+  # a backup is stored
+  cp "$HOME/$profile" "$HOME/$profile"_bkp
+  # the file is moved to the new dotfile folder
+  mv "$HOME/$profile" "$dotfile_folder/$profile"
+  # a symlink is created to the new dotfile in \$HOME
+  ln -sv "$dotfile_folder/$profile" "$HOME"
+
+  custom_profile "" "$dotfile_folder/$profile"
+  common_profile "$dotfile_folder/$profile"
+}
+
+
+# MAIN
+# first we detect existing profile files to append common operators
+# zsh
+if test -f "$HOME/$zsh_profile"; then
+  profile=$zsh_profile
+  custom_profile $zsh_profile
+  echo "$HOME/$profile exists, storing backup in ${HOME}/${profile}_bkp"
+  # a backup is stored
+  cp "$HOME/$profile" "$HOME/$profile"_bkp
+  # the file is moved to the new dotfile folder
+  mv "$HOME/$profile" "$dotfile_folder/$profile"
+  # a symlink is created to the new dotfile in \$HOME
+  ln -sv "$dotfile_folder/$profile" "$HOME"
+  zsh_profile "$dotfile_folder/$profile"
+  common_profile "$dotfile_folder/$profile"
+fi
+
