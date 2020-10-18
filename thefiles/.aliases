@@ -23,6 +23,12 @@ function common {
 }
 
 function macos {
+  # alias to launch brew_maintain
+  alias bmaintain="/Users/choco/.scripts/brew_maintain"
+
+  # alias to load_pi
+  alias load_rpi="/Users/choco/.scripts/load_rpi"
+
   # Show/hide hidden files in Finder
   alias showh="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
   alias hideh="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
