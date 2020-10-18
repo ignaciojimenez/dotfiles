@@ -1,0 +1,72 @@
+#!/bin/bash
+
+set -e  # stop on errors
+set -u  # stop on unset variables
+set -o pipefail  # stop on pipe failures
+
+# TODO Do it xD
+function get_what_disk {
+  local disks="$1"
+  echo "${disks}"
+}
+
+
+function format_disk {
+  echo "WARNING: This will erase your disk completely and overwrite it" >&2
+  echo "If you are not sure about what you're doing press ctrl+c to quit the execution at any point" >&2
+  echo >&2
+  echo "-------------------------------------------------------" >&2
+  echo "Starting disk erasure process" >&2
+  # first we find out about existing external disks
+  disks=$(diskutil list | grep external | cut -d" " -f1)
+  number_of_disks=$(diskutil list | grep external | cut -d" " -f1 | wc -l)
+  if [[ $number_of_disks -ne 1 ]]; then
+    echo "Multiple external drives found. Script currently doesn't support it" >&2
+    # disk=$(get_what_disk "${disks}")
+    exit 1
+  else
+    disk="$disks"
+  fi
+
+  echo "Disk: ${disk} will be formated" >&2
+  diskutil info "${disk}" >&2
+
+  echo "Please review the information listed above" >&2
+  echo -n "Are you sure you want to proceed and remove ALL DATA in ${disk} (y/n)? " >&2
+  read -r answer
+
+  if [ "$answer" != "${answer#[Yy]}" ] ;then
+      sudo diskutil eraseDisk FAT32 "${1}" MBRFormat "${disk}" >&2
+      echo "Disk: ${disk} successfully formated" >&2
+  else
+      echo "Nothing done" >&2
+      exit 1
+  fi
+}
+
+
+function move_image {
+  if ! command -v lastversion &> /dev/null
+  then
+    echo "-------------------------------------------------------" >&2
+    echo "Installing lastversion: pip install lastversion" >&2
+    pip3 install lastversion
+  fi
+  echo >&2
+  echo "-------------------------------------------------------" >&2
+  echo "Downloading last netinstall release" >&2
+  account="FooDeas"
+  project="raspberrypi-ua-netinst" >&2
+  download_url=$(lastversion --assets ${account}/${project} --filter zip)
+  curl --location "${download_url}" --output "${project}" >&2
+  echo >&2
+  echo "-------------------------------------------------------" >&2
+  echo "Unzupping downloaded file" >&2
+  unzip -qq "${project}" -d "/Volumes/${1}" >&2
+  rm "${project}"
+}
+
+# TODO Read volume from stdin
+new_volume="SDCARD"
+format_disk ${new_volume} && move_image "${new_volume}"
+# pending move installation
