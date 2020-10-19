@@ -36,8 +36,9 @@ function format_disk {
   read -r answer
 
   if [ "$answer" != "${answer#[Yy]}" ] ;then
-      sudo diskutil eraseDisk FAT32 "${1}" MBRFormat "${disk}" >&2
-      echo "Disk: ${disk} successfully formated" >&2
+      echo "Executing: sudo diskutil eraseDisk FAT32 ${1} MBRFormat ${disk}"
+      sudo diskutil eraseDisk FAT32 "${1}" MBRFormat "${disk}" \
+      && echo "Disk: ${disk} successfully formated" >&2
   else
       echo "Nothing done" >&2
       exit 1
@@ -61,7 +62,7 @@ function move_image {
   curl --location "${download_url}" --output "${project}" >&2
   echo >&2
   echo "-------------------------------------------------------" >&2
-  echo "Unzupping downloaded file" >&2
+  echo "Unzipping downloaded file" >&2
   unzip -qq "${project}" -d "/Volumes/${1}" >&2
   rm "${project}"
 }
@@ -69,4 +70,7 @@ function move_image {
 # TODO Read volume from stdin
 new_volume="SDCARD"
 format_disk ${new_volume} && move_image "${new_volume}"
+echo
+echo "-------------------------------------------------------"
+echo "Process finished succesfully"
 # pending move installation
