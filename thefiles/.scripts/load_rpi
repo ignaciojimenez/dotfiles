@@ -17,6 +17,7 @@ function format_disk {
   echo >&2
   echo "-------------------------------------------------------" >&2
   echo "Starting disk erasure process" >&2
+  echo "-------------------------------------------------------" >&2
   # first we find out about existing external disks
   disks=$(diskutil list | grep external | cut -d" " -f1)
   number_of_disks=$(diskutil list | grep external | cut -d" " -f1 | wc -l)
@@ -51,18 +52,21 @@ function move_image {
   then
     echo "-------------------------------------------------------" >&2
     echo "Installing lastversion: pip install lastversion" >&2
+    echo "-------------------------------------------------------" >&2
     pip3 install lastversion
   fi
   echo >&2
   echo "-------------------------------------------------------" >&2
   echo "Downloading last netinstall release" >&2
+  echo "-------------------------------------------------------" >&2
   account="FooDeas"
   project="raspberrypi-ua-netinst" >&2
   download_url=$(lastversion --assets ${account}/${project} --filter zip)
   curl --location "${download_url}" --output "${project}" >&2
   echo >&2
   echo "-------------------------------------------------------" >&2
-  echo "Unzipping downloaded file" >&2
+  echo "Unzipping downloaded file to ${1}" >&2
+  echo "-------------------------------------------------------" >&2
   unzip -qq "${project}" -d "/Volumes/${1}" >&2
   rm "${project}"
 }
