@@ -1,80 +1,84 @@
 #!/bin/bash
 
-set -e  # stop on errors
-set -u  # stop on unset variables
-set -o pipefail  # stop on pipe failures
+set -e          # stop on errors
+set -u          # stop on unset variables
+set -o pipefail # stop on pipe failures
 
 # TODO Do it xD
-function get_what_disk {
-  local disks="$1"
-  echo "${disks}"
+function get_what_disk() {
+    local disks="$1"
+    echo "${disks}"
 }
 
+function get_latest_release_url() {
+    # expected parameters $1:account $2:project $3:filter
+    url=$(curl -s https://api.github.com/repos/"${1}"/"${2}"/releases/latest |
+        grep browser_download_url |
+        grep "${3}" |
+        cut -d '"' -f 4)
+    echo "${url}"
+}
 
-function format_disk {
-  echo "WARNING: This will erase your disk completely and overwrite it" >&2
-  echo "If you are not sure about what you're doing press ctrl+c to quit the execution at any point" >&2
-  echo >&2
-  echo "-------------------------------------------------------" >&2
-  echo "Starting disk erasure process" >&2
-  echo "-------------------------------------------------------" >&2
-  # first we find out about existing external disks
-  disks=$(diskutil list | grep external | cut -d" " -f1)
-  number_of_disks=$(diskutil list | grep external | cut -d" " -f1 | wc -l)
-  if [[ $number_of_disks -ne 1 ]]; then
-    echo "Multiple external drives found. Script currently doesn't support it" >&2
-    # disk=$(get_what_disk "${disks}")
-    exit 1
-  else
-    disk="$disks"
-  fi
-
-  echo "Disk: ${disk} will be formated" >&2
-  diskutil info "${disk}" >&2
-
-  echo "Please review the information listed above" >&2
-  echo -n "Are you sure you want to proceed and remove ALL DATA in ${disk} (y/n)? " >&2
-  read -r answer
-
-  if [ "$answer" != "${answer#[Yy]}" ] ;then
-      echo "Executing: sudo diskutil eraseDisk FAT32 ${1} MBRFormat ${disk}"
-      sudo diskutil eraseDisk FAT32 "${1}" MBRFormat "${disk}" \
-      && echo "Disk: ${disk} successfully formated" >&2
-  else
-      echo "Nothing done" >&2
+function warning() {
+    echo "WARNING: This will erase your disk completely and overwrite it" >&2
+    echo "Please review the device information carefully to avoid losing data" >&2
+    echo "-------------------------------------------------------" >&2
+    echo "Starting disk erasure process" >&2
+    echo "-------------------------------------------------------" >&2
+    # first we find out about existing external disks
+    disks=$(diskutil list | grep external | cut -d" " -f1)
+    number_of_disks=$(diskutil list | grep external | cut -d" " -f1 | wc -l)
+    if [[ $number_of_disks -eq 1 ]]; then
+      disk="$disks"
+    elif [[ $number_of_disks -eq 0 ]]; then
+      echo "No external devices found" >&2
       exit 1
-  fi
+    elif [[ $number_of_disks -gt 1 ]]; then
+      echo "Multiple external drives found. Script currently doesn't support it" >&2
+      # disk=$(get_what_disk "${disks}")
+      exit 1
+    else
+      echo "Diskutil output unexpected. Command run: diskutil list | grep external | cut -d" " -f1 | wc -l" >&2
+      exit 1
+    fi
+
+    echo "Disk: ${disk} will be formated" >&2
+    diskutil info "${disk}" >&2
+
+    echo "Review the information listed above" >&2
+    echo -n "Are you sure you want to proceed and remove ALL DATA in ${disk} (y/n)? " >&2
+    read -r answer
+    if [ "$answer" == "${answer#[Yy]}" ]; then
+        echo "Program exited" >&2
+        exit 1
+    fi
+    echo "${disk}"
 }
 
-
-function move_image {
-  if ! command -v lastversion &> /dev/null
-  then
+function move_image() {
     echo "-------------------------------------------------------" >&2
-    echo "Installing lastversion: pip install lastversion" >&2
+    echo "Starting Disk flashing procedure" >&2
     echo "-------------------------------------------------------" >&2
-    pip3 install lastversion
-  fi
-  echo >&2
-  echo "-------------------------------------------------------" >&2
-  echo "Downloading last netinstall release" >&2
-  echo "-------------------------------------------------------" >&2
-  account="FooDeas"
-  project="raspberrypi-ua-netinst" >&2
-  download_url=$(lastversion --assets ${account}/${project} --filter zip)
-  curl --location "${download_url}" --output "${project}" >&2
-  echo >&2
-  echo "-------------------------------------------------------" >&2
-  echo "Unzipping downloaded file to ${1}" >&2
-  echo "-------------------------------------------------------" >&2
-  unzip -qq "${project}" -d "/Volumes/${1}" >&2
-  rm "${project}"
+    account="FooDeas"
+    project="raspberrypi-ua-netinst"
+    image_filter="img.bz2"
+    echo "Downloading last netinstall release: get_download_url ${account} ${project} ${image_filter}" >&2
+    download_url=$(get_latest_release_url ${account} ${project} ${image_filter})
+    curl -s -L -O -J "${download_url}"
+    bz2_file=${download_url##*/}
+    echo "Downloaded url: ${download_url}" >&2
+    echo "Unzipping file: bunzip2 ${bz2_file}" >&2
+    bunzip2 "${bz2_file}"
+    echo "Unmounting device: diskutil unmountDisk ${1}" >&2
+    diskutil unmountDisk "${1}"
+    echo "Flashing device: sudo dd bs=1m if=${bz2_file%.*} of=/dev/r${1##*/}" >&2
+    sudo dd bs=1m if="${bz2_file%.*}" of=/dev/r"${1##*/}"
+    echo "Removing temp image file: rm ${bz2_file%.*}" >&2
+    rm "${bz2_file%.*}"
 }
 
-# TODO Read volume from stdin
-new_volume="SDCARD"
-format_disk ${new_volume} && move_image "${new_volume}"
-echo
+# main
+disk=$(warning)
+move_image "${disk}"
 echo "-------------------------------------------------------"
 echo "Process finished succesfully"
-# pending move installation
