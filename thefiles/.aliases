@@ -1,5 +1,6 @@
 #!/bin/bash
-function common {
+
+common(){
   # git aliases
   alias g=git
   alias ga='git add'
@@ -20,14 +21,24 @@ function common {
 
   # Reload the shell (i.e. invoke as a login shell)
   alias reload="exec $SHELL -l"
+
+  # ssh forcing password authentication
+  alias sshp="ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no"
 }
 
-function macos {
-  # alias to launch brew_maintain
-  alias bmaintain="/Users/choco/.scripts/brew_maintain"
+macos(){
+  USERSPACE_PATH="/Users/$USER"
+  WORKSPACE_PATH="${USERSPACE_PATH}/Documents/Workspaces"
 
-  # alias to load_pi
-  alias load_rpi="/Users/choco/.scripts/load_rpi"
+  # alias to launch brew_maintain
+  alias bmaintain="${USERSPACE_PATH}/.scripts/brew_maintain"
+
+  # alias to pi utilities
+  alias load_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/load_rpi"
+  alias bootstrap_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/bootstrap_rpi"
+
+  # quick ssh aliases
+  #alias shremote="ssh chocohome.freemyip.com -p 49529"
 
   # Show/hide hidden files in Finder
   alias showh="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
@@ -38,6 +49,10 @@ function macos {
   for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
     alias "${method}"="lwp-request -m '${method}'"
   done
+}
+
+unix(){
+  echo "No custom aliases for unix yet" >&2
 }
 
 # setting up common aliases
