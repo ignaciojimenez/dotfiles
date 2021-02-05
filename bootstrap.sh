@@ -36,8 +36,8 @@ if [ "$os_type" != "unix" ] && [ "$os_type" != "macos" ]; then
 fi
 
 # maintaining dotfiles with symlinks
-echo "Creting symlinks to dotfiles in \$HOME folder"
-ignore_list=".idea .git .gitignore . .."
+echo "Creating symlinks to dotfiles in \$HOME folder"
+ignore_list=".idea .git .gitignore . .. .DS_Store"
 for file_path in thefiles/.*; do
   filename=$(basename "$file_path")
   # exclude ignore_list from symlinking
