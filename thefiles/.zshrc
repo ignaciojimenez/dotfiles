@@ -38,10 +38,10 @@ ZSH_THEME="robbyrussell"
 plugins=(git)
 
 # exporting some env variables
-source .exports
+source ~/.exports
 
 # common bash functions used in scripts
-source .common_functions
+source ~/.common_functions
 
 # importing aliases
-source .aliases $(detect_os)
+source ~/.aliases $(detect_os)

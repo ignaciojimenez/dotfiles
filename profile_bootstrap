@@ -4,13 +4,13 @@ function common_profile {
   # shellcheck disable=SC2129
   echo >> "$1"
   echo "# exporting some env variables" >> "$1"
-  echo "source .exports" >> "$1"
+  echo "source ~/.exports" >> "$1"
   echo >> "$1"
   echo "# common bash functions used in scripts" >> "$1"
-  echo "source .common_functions" >> "$1"
+  echo "source ~/.common_functions" >> "$1"
   echo >> "$1"
   echo "# importing aliases" >> "$1"
-  echo "source .aliases \$(detect_os)" >> "$1"
+  echo "source ~/.aliases \$(detect_os)" >> "$1"
 }
 
 function custom_profile {
