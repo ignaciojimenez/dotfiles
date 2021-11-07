@@ -2,3 +2,5 @@
 	signingkey = BEEF903EFBDFB6AB
 	name = Ignacio Jimenez
 	email = i.jimenezpi@gmail.com
+[commit]
+	gpgSign = true
