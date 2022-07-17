@@ -34,8 +34,8 @@ macos(){
   alias bmaintain="${USERSPACE_PATH}/.scripts/brew_maintain"
 
   # alias to pi utilities
-  alias load_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/load_rpi"
-  alias bootstrap_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/bootstrap_rpi"
+  alias load_rpi="${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi"
+  # alias bootstrap_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/bootstrap_rpi"
 
   # quick ssh aliases
   #alias shremote="ssh chocohome.freemyip.com -p 49529"
