@@ -8,6 +8,9 @@ export PATH="/usr/local/opt/openjdk/bin:/usr/local/sbin:/Users/choco/Library/Pyt
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 ZSH_THEME="robbyrussell"
 
+# Added secretive ssh agent to SSH_AUTH_SOCK
+export SSH_AUTH_SOCK=/Users/choco/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
+
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 
