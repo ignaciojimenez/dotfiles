@@ -1,6 +1,8 @@
 [user]
-	signingkey = BEEF903EFBDFB6AB
+	signingkey = /Users/choco/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/611a654f8d44e77d546f6b1a1112eb70.pub
 	name = Ignacio Jimenez
 	email = i.jimenezpi@gmail.com
 [commit]
 	gpgSign = true
+[gpg]
+	format = ssh
