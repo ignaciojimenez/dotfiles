@@ -1,0 +1,43 @@
+#!/bin/zsh
+
+# Use emacs key bindings
+bindkey -e
+
+# Make sure the terminal is in application mode when zle is active
+if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
+  function zle-line-init() {
+    echoti smkx
+  }
+  function zle-line-finish() {
+    echoti rmkx
+  }
+  zle -N zle-line-init
+  zle -N zle-line-finish
+fi
+
+# Use modern terminal key bindings
+bindkey '^[[1;5C' forward-word                      # Ctrl + Right
+bindkey '^[[1;5D' backward-word                     # Ctrl + Left
+bindkey '^[[H' beginning-of-line                    # Home
+bindkey '^[[F' end-of-line                         # End
+bindkey '^[[3~' delete-char                        # Delete
+bindkey '^[[A' history-beginning-search-backward    # Up arrow
+bindkey '^[[B' history-beginning-search-forward     # Down arrow
+bindkey '^[b' backward-word                        # Alt + Left
+bindkey '^[f' forward-word                         # Alt + Right
+bindkey '^H' backward-delete-word                  # Ctrl + Backspace
+bindkey '^[[3;5~' kill-word                        # Ctrl + Delete
+bindkey '^U' backward-kill-line                    # Ctrl + U
+bindkey '^K' kill-line                            # Ctrl + K
+bindkey '^Y' yank                                 # Ctrl + Y
+
+# Better history search
+autoload -U up-line-or-beginning-search
+autoload -U down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+
+# Set terminal type properly
+export TERM=xterm-256color

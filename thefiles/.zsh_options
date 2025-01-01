@@ -1,0 +1,51 @@
+#!/bin/zsh
+
+# Enhanced completion system
+autoload -Uz compinit
+compinit
+zstyle ':completion:*' menu select  # Enable menu-style completion
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'  # Case-insensitive completion
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}  # Colored completion menu
+zstyle ':completion:*' special-dirs true  # Complete special directories
+
+# History settings
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=10000
+setopt HIST_VERIFY             # Show command with history expansion before running it
+setopt SHARE_HISTORY          # Share history between sessions
+setopt HIST_IGNORE_DUPS       # Don't record duplicated commands
+setopt HIST_FIND_NO_DUPS      # Don't show duplicates in search
+setopt HIST_REDUCE_BLANKS     # Remove unnecessary blanks
+setopt EXTENDED_HISTORY       # Record timestamp in history
+setopt INC_APPEND_HISTORY     # Add commands to history immediately
+setopt HIST_IGNORE_SPACE      # Don't save commands starting with space
+setopt RM_STAR_WAIT          # Wait before executing dangerous commands
+
+# Directory navigation
+setopt AUTO_CD                # If command is directory name, cd into it
+setopt AUTO_PUSHD            # Make cd push old directory onto directory stack
+setopt PUSHD_IGNORE_DUPS     # Don't push duplicates onto directory stack
+setopt PUSHD_SILENT          # Don't print directory stack after pushd/popd
+setopt PUSHD_TO_HOME         # pushd with no arguments goes to home
+
+# Globbing and expansion
+setopt EXTENDED_GLOB         # Extended globbing capabilities
+setopt GLOB_DOTS            # Include dotfiles in globbing
+setopt NUMERIC_GLOB_SORT    # Sort filenames numerically when relevant
+setopt NO_CASE_GLOB        # Case insensitive globbing
+
+# Input/Output
+setopt INTERACTIVE_COMMENTS  # Allow comments in interactive shell
+setopt NO_FLOW_CONTROL      # Disable start/stop characters
+setopt NO_BEEP             # No beep on error
+setopt COMBINING_CHARS     # Handle multi-byte characters properly
+
+# Job Control
+setopt AUTO_RESUME         # Treat single word simple commands as candidates for resumption
+setopt LONG_LIST_JOBS     # List jobs in long format
+setopt NOTIFY            # Report status of background jobs immediately
+
+# Command correction
+setopt CORRECT          # Try to correct command spelling
+setopt CORRECT_ALL      # Try to correct all arguments in a line
