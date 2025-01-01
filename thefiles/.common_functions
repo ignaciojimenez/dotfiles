@@ -1,17 +1,5 @@
 #!/bin/bash
 
-function list_include_item() {
-  local list="$1"
-  local item="$2"
-  if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]]; then
-    # yes, list include item
-    result=1
-  else
-    result=0
-  fi
-  echo $result
-}
-
 function detect_os() {
   # detecting OS type
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
