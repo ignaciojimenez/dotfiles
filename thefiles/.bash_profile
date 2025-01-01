@@ -1,9 +1,19 @@
-# TODO: explore $PATH problems
-# exporting some env variables
-source .exports
+#!/bin/bash
 
-# common bash functions used in scripts
-source .common_functions
+# Load core profile settings
+source ~/.profile
 
-# importing aliases
-source .aliases $(detect_os)
+# Load bash-specific settings for non-interactive sessions here
+# Currently none needed
+
+# For interactive sessions, load additional resources
+if [[ -n $PS1 ]]; then
+    # exporting some env variables
+    source ~/.exports
+    
+    # common bash functions used in scripts
+    source ~/.common_functions
+    
+    # importing aliases
+    source ~/.aliases $(detect_os)
+fi
