@@ -6,31 +6,34 @@ dotfiles/
 ├── thefiles/
 │   ├── .scripts/
 │   │    └── brew_maintain - homebrew update script to be added to cronjob
-│   ├── .aliases
-│   ├── .bash_profile
-│   ├── .common_functions
-│   ├── .exports
-│   ├── .gitconfig
-│   └── .zshrc
-├── bootstrap.sh - creates symlinks and initializes the environment if passed as an argument
-├── env_bootstrap.sh - environment initializer
-├── profile_bootstrap.sh - NOT USED ATM (probably never to be used)
+│   ├── .aliases         - Shell aliases (OS-specific included)
+│   ├── .bash_profile   - Bash-specific profile
+│   ├── .common_functions - Shared shell functions
+│   ├── .exports        - Environment variables
+│   ├── .gitconfig      - Git configuration
+│   ├── .profile        - Core shell-agnostic settings
+│   ├── .security       - Security settings and SSH config
+│   ├── .zprofile       - Zsh login settings
+│   ├── .zsh_keys       - Zsh key bindings
+│   ├── .zsh_options    - Zsh shell options
+│   └── .zshrc          - Zsh interactive settings
+├── bootstrap.sh       - Creates symlinks in $HOME
+├── env_bootstrap.sh   - Environment initializer (macos|unix)
 └── README.md
 ```
 
-## Installation/usage
+## Installation
 1. Clone git repo
 `git clone https://github.com/ignaciojimenez/dotfiles.git`
 2. Execute bootstrap.sh 
  `bootstrap.sh` can be run in two modes:
-   - Plain: It will create symlinks in `$HOME` folder to all dotfiles contained in the repo
-   - Kickstart: If `--kickstart or -k` are used, also the environment will be kickstarted: Useful for new installations
-  `env_bootstrap.sh` is the _kickstart_ script. It can be used separately passing the environment type as an argument (currently only `macos|unix`)
-      > Note that currently almost everything has been mainly tested in macos
+   - Plain: Creates symlinks in `$HOME` to all dotfiles
+   - Kickstart: Use `--kickstart or -k` to also initialize environment
 
-## Future work
-- [ ] Test in bash to see if Path needs to be created
-- [ ] Develop more unix (currently almost empty)
-- [ ] Think of a smarter way to populate changes into different shells
-- [ ] Make it work for other shells - For now solutions are all tradeoffs of the dotfile usability
-- [ ] env_bootstrap is a zsh script to include specific mac directives. Test if this will work in debian.
+> Note: Currently tested mainly on macOS. Provides fallbacks for missing apps (Sublime, Secretive).
+
+## Features
+- Organized shell configuration (login vs interactive)
+- Enhanced zsh experience (key bindings, history, navigation)
+- Security-focused settings with fallbacks
+- OS-specific customizations (macos|unix)
