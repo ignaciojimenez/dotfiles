@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Set restrictive umask - only user can read/write/execute new files
+umask 077
+
+# Ensure SSH_AUTH_SOCK is set correctly and secure if Secretive is installed
+SECRETIVE_SOCKET="/Users/choco/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
+if [ -S "$SECRETIVE_SOCKET" ]; then
+    export SSH_AUTH_SOCK="$SECRETIVE_SOCKET"
+elif [ -S "$HOME/.ssh/agent.sock" ]; then
+    export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"  # fallback to standard SSH agent socket
+fi
