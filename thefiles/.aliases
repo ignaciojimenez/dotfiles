@@ -13,11 +13,33 @@ common(){
   alias glg='git log --stat'
 
   # ls confs
-  alias ls='ls -GFlh'
+  alias ls='ls -Flh --color=auto'
   export LSCOLORS='BxBxhxDxfxhxhxhxhxcxcx'
 
-  # grep confs
-  alias grep='grep --color=auto --exclude-dir={.git}'
+  # Safety features
+  set -o noclobber          # Prevent overwriting files with >
+  alias rm='rm -i'          # Prompt before removal
+  alias cp='cp -i'          # Prompt before overwrite
+  alias mv='mv -i'          # Prompt before overwrite
+
+  # Directory navigation
+  alias d='dirs -v'
+  alias 1='cd -1'
+  alias 2='cd -2'
+  alias 3='cd -3'
+
+  # Directory stack
+  alias pd='pushd'
+  alias pod='popd'
+
+  # Enable color support
+  if [ -x /usr/bin/dircolors ]; then
+      eval "$(dircolors -b)"
+      alias ls='ls --color=auto'
+      alias grep='grep --color=auto'
+      alias fgrep='fgrep --color=auto'
+      alias egrep='egrep --color=auto'
+  fi
 
   # Reload the shell (i.e. invoke as a login shell)
   alias reload="exec $SHELL -l"

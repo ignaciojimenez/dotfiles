@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# History settings
+HISTSIZE=50000
+HISTFILESIZE=100000
+SAVEHIST=$HISTSIZE
+
+# Common environment settings
+export HISTCONTROL=ignoreboth    # Ignore duplicates and space-prefixed
+export HISTIGNORE="ls:ll:cd:pwd:exit:date"  # Commands to ignore in history
+
+# Enable advanced pattern matching
+export GLOBIGNORE=".:.."   # Ignore . and .. in pattern matching
+
+# Input/Output settings
+export IGNOREEOF=2        # Require CTRL+D twice to exit
+stty -ixon               # Disable flow control (CTRL+S, CTRL+Q)

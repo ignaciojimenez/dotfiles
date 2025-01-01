@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Source common shell options
+source ~/.shell_options
+
+# History settings
+HISTFILE=~/.bash_history
+shopt -s histappend       # Append to history rather than overwrite
+
+# Directory navigation
+shopt -s autocd 2>/dev/null     # Change directory by typing directory name
+shopt -s dirspell 2>/dev/null   # Correct directory spelling
+shopt -s cdspell 2>/dev/null    # Correct minor spelling errors in cd path
+shopt -s direxpand 2>/dev/null  # Expand directory names
+
+# Globbing
+shopt -s extglob         # Extended pattern matching
+shopt -s dotglob         # Include dotfiles in pattern matching
+shopt -s nocaseglob      # Case-insensitive globbing
+shopt -s globstar 2>/dev/null  # ** matches zero or more directories
+
+# Completion settings
+if [ -f /etc/bash_completion ]; then
+    source /etc/bash_completion
+fi
+
+# Enable programmable completion features
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    source /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    source /etc/bash_completion
+  fi
+fi
+
+# Custom completion settings
+complete -d cd pushd rmdir      # Only directories for cd/pushd/rmdir
+complete -f vim nano less more  # Only files for editors/viewers
+
+# Job control
+set -o notify              # Notify of job status changes immediately
+shopt -s checkjobs        # Check for running jobs on shell exit
+
+# Input settings
+shopt -s cmdhist          # Save multi-line commands in history as single line
+shopt -s lithist          # Save multi-line commands with embedded newlines
