@@ -37,9 +37,6 @@ macos(){
   alias load_rpi="${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi"
   # alias bootstrap_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/bootstrap_rpi"
 
-  # quick ssh aliases
-  #alias shremote="ssh chocohome.freemyip.com -p 49529"
-
   # Show/hide hidden files in Finder
   alias showh="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
   alias hideh="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
