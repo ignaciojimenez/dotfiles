@@ -1,6 +1,6 @@
 # Set default working directory
-export WORKSPACE_DIR="$HOME/Documents/Workspaces"
-[[ -d "$WORKSPACE_DIR" ]] && cd "$WORKSPACE_DIR"
+#export WORKSPACE_DIR="$HOME/Documents/Workspaces"
+#[[ -d "$WORKSPACE_DIR" ]] && cd "$WORKSPACE_DIR"
 
 # Load security settings
 source ~/.security
