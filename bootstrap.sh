@@ -246,12 +246,12 @@ create_symlinks() {
 main() {
     parse_args "$@"
     
-    # Show usage if -h was passed
-    if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    # Show usage if -h was passed and if any arguments are provided
+    if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
         usage
         exit 0
     fi
-    
+
     # Detect OS type
     local os_type shell_type
     os_type=$(detect_os)
