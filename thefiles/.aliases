@@ -53,11 +53,25 @@ macos(){
   WORKSPACE_PATH="${USERSPACE_PATH}/Documents/Workspaces"
 
   # alias to launch brew_maintain
-  alias bmaintain="${USERSPACE_PATH}/.scripts/brew_maintain"
+  if [ -f "${USERSPACE_PATH}/.scripts/brew_maintain" ]; then
+    alias bmaintain="${USERSPACE_PATH}/.scripts/brew_maintain"
+  else
+    echo ".aliases: brew_maintain not found" >&2
+  fi
 
   # alias to pi utilities
-  alias load_rpi="${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi"
-  # alias bootstrap_rpi="${WORKSPACE_PATH}/raspberrypi-kickstart/bootstrap_rpi"
+  if [ -f "${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi" ]; then
+    alias load_rpi="${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi"
+  else
+    echo ".aliases: load_rpi not found" >&2
+  fi
+
+  # alias to python
+  if [ -f "/usr/bin/python3" ]; then
+    alias python="/usr/bin/python3"
+  else
+    echo ".aliases: python3 not found" >&2
+  fi
 
   # Show/hide hidden files in Finder
   alias showh="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
