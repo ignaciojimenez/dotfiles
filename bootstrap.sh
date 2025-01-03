@@ -219,6 +219,18 @@ create_symlinks() {
         fi
     done
     
+    # Check if the directory exists
+    if [ -d "/Users/$USER/Documents/Workspaces" ]; then
+        # Create a symlink in the user's home directory
+        if [[ "$DRY_RUN" -eq 0 ]]; then
+            ln -s "/Users/$USER/Documents/Workspaces" "$HOME/Workspaces"
+            info "Created symlink: $HOME/Workspaces -> /Users/$USER/Documents/Workspaces"
+            ((changes_made++))
+        else
+            info "[DRY-RUN] Would create symlink: $HOME/Workspaces -> /Users/$USER/Documents/Workspaces"
+        fi
+    fi
+    
     # Summary
     if [[ "$changes_made" -eq 0 ]]; then
         info "No changes needed, all files are up to date"
