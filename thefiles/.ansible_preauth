@@ -1,0 +1,171 @@
+#!/bin/bash
+
+# Ansible SSH Pre-Authentication Configuration
+# Provides wrapper functions for ansible and ansible-playbook to handle
+# TouchID/Secretive authentication challenges with automatic session caching
+
+# Extract hosts from --limit or -l parameter
+function extract_limit_hosts() {
+  local args="$*"
+  local limit_value=""
+  
+  # Use simpler pattern matching approach
+  # Handle --limit=value format
+  if [[ "$args" == *"--limit="* ]]; then
+    limit_value=$(echo "$args" | sed -n 's/.*--limit=\([^[:space:]]*\).*/\1/p')
+  # Handle --limit value format  
+  elif [[ "$args" == *"--limit "* ]]; then
+    limit_value=$(echo "$args" | sed -n 's/.*--limit \([^[:space:]]*\).*/\1/p')
+  # Handle -l=value format
+  elif [[ "$args" == *"-l="* ]]; then
+    limit_value=$(echo "$args" | sed -n 's/.*-l=\([^[:space:]]*\).*/\1/p')
+  # Handle -l value format
+  elif [[ "$args" == *"-l "* ]]; then
+    limit_value=$(echo "$args" | sed -n 's/.*-l \([^[:space:]]*\).*/\1/p')
+  fi
+  
+  echo "$limit_value"
+}
+
+# Count hosts in a limit specification
+function count_limit_hosts() {
+  local limit="$1"
+  if [[ -z "$limit" ]]; then
+    echo "0"
+    return
+  fi
+  
+  # Count commas + 1 for comma-separated hosts
+  if [[ "$limit" == *","* ]]; then
+    echo $(($(echo "$limit" | tr -cd ',' | wc -c) + 1))
+  else
+    echo "1"
+  fi
+}
+
+# Get hosts for pre-authentication (from limit or inventory)
+function get_preauth_hosts() {
+  local args="$*"
+  local limit_hosts=$(extract_limit_hosts "$args")
+  
+  if [[ -n "$limit_hosts" ]]; then
+    # Use hosts from limit parameter (replace commas with spaces)
+    echo "${limit_hosts//,/ }"
+    return
+  fi
+  
+  # Fall back to inventory file
+  local inventory_file=""
+  for inv in inventory hosts ansible_hosts; do
+    if [[ -f "$inv" ]]; then
+      inventory_file="$inv"
+      break
+    fi
+  done
+  
+  if [[ -n "$inventory_file" ]]; then
+    # Extract hosts from inventory (skip group headers, comments, empty lines, and variable assignments)
+    grep -v '^\[' "$inventory_file" 2>/dev/null | grep -v '^#' | grep -v '^$' | grep -v '=' | awk '{print $1}' || echo ""
+  fi
+}
+
+# Ansible SSH pre-authentication for Secretive/TouchID
+function ansible_preauth() {
+  local args="$*"
+  
+  # Check if we have active SSH sessions (< 9 minutes old)
+  local control_dir="$HOME/.ssh"
+  local active_sessions=$(find "$control_dir" -name "control:*" -newer <(date -v-9M '+%Y%m%d%H%M.%S') 2>/dev/null | wc -l)
+  
+  if [[ $active_sessions -gt 0 ]]; then
+    return 0  # Active sessions exist, skip pre-auth
+  fi
+  
+  echo "🔐 Pre-authenticating SSH sessions for Ansible..."
+  
+  # Get hosts for pre-authentication
+  local hosts=$(get_preauth_hosts "$args")
+  
+  if [[ -z "$hosts" ]]; then
+    echo "  No hosts found for pre-authentication"
+    return 0
+  fi
+  
+  # Connect to each host sequentially
+  for host in $hosts; do
+    printf "  %-15s... " "$host"
+    
+    # Check if we already have an active session for this host
+    if ssh -O check "$host" 2>/dev/null; then
+      echo "✓ (cached)"
+      continue
+    fi
+    
+    # Connect to establish ControlMaster session
+    if timeout 15 ssh -o ConnectTimeout=8 -o BatchMode=no "$host" "exit" 2>/dev/null; then
+      echo "✓"
+    else
+      echo "✗"
+    fi
+  done
+  
+  echo "✓ SSH sessions cached for Ansible"
+}
+
+# Wrapper for ansible-playbook with automatic pre-authentication
+function ansible-playbook() {
+  local limit_hosts=$(extract_limit_hosts "$*")
+  local host_count=$(count_limit_hosts "$limit_hosts")
+  
+  # Pre-auth only if targeting multiple hosts or no limit specified
+  if [[ $host_count -eq 0 ]] || [[ $host_count -gt 1 ]]; then
+    ansible_preauth "$@"
+  fi
+  
+  # Run the actual ansible-playbook command
+  command ansible-playbook "$@"
+}
+
+# Extract first argument (target hosts) from ansible command
+function extract_ansible_targets() {
+  local args=($*)
+  # Skip options that start with - to find the target hosts argument
+  for arg in "${args[@]}"; do
+    if [[ "$arg" != -* ]] && [[ "$arg" != *"="* ]]; then
+      echo "$arg"
+      return
+    fi
+  done
+}
+
+# Wrapper for ansible with automatic pre-authentication  
+function ansible() {
+  local limit_hosts=$(extract_limit_hosts "$*")
+  local host_count=$(count_limit_hosts "$limit_hosts")
+  local should_preauth=false
+  
+  if [[ $host_count -gt 1 ]]; then
+    # Multiple hosts in limit parameter
+    should_preauth=true
+  elif [[ $host_count -eq 1 ]]; then
+    # Single host in limit parameter - don't pre-auth
+    should_preauth=false
+  else
+    # No limit specified, check direct host targeting
+    local target_hosts=$(extract_ansible_targets "$@")
+    if [[ "$target_hosts" == "all" ]] || [[ "$target_hosts" == *","* ]] || [[ "$target_hosts" == *":"* ]]; then
+      # Multiple hosts targeted directly
+      should_preauth=true
+    else
+      # Single host targeted directly - don't pre-auth
+      should_preauth=false
+    fi
+  fi
+  
+  if [[ "$should_preauth" == "true" ]]; then
+    ansible_preauth "$@"
+  fi
+  
+  # Run the actual ansible command
+  command ansible "$@"
+}

@@ -46,6 +46,11 @@ common(){
 
   # ssh forcing password authentication
   alias sshp="ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no"
+
+  # Source Ansible SSH pre-authentication configuration
+  if [[ -f ~/.ansible_preauth ]]; then
+    source ~/.ansible_preauth
+  fi
 }
 
 macos(){
@@ -66,9 +71,15 @@ macos(){
     echo ".aliases: load_rpi not found" >&2
   fi
 
-  # alias to python
+  # Function for python
   if [ -f "/usr/bin/python3" ]; then
-    alias python="/usr/bin/python3"
+    python() {
+      if [[ -n "$VIRTUAL_ENV" ]]; then
+        command python "$@"
+        else
+         /usr/bin/python3 "$@"
+        fi
+    }
   else
     echo ".aliases: python3 not found" >&2
   fi
