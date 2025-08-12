@@ -43,16 +43,30 @@ function count_limit_hosts() {
   fi
 }
 
-# Get hosts for pre-authentication (from limit or inventory)
+# Get hosts for pre-authentication (from limit, playbook, or inventory)
 function get_preauth_hosts() {
-  local args="$*"
-  local limit_hosts=$(extract_limit_hosts "$args")
+  local args=("$@")  # Use array to preserve individual arguments
+  local limit_hosts=$(extract_limit_hosts "$*")
   
   if [[ -n "$limit_hosts" ]]; then
     # Use hosts from limit parameter (replace commas with spaces)
     echo "${limit_hosts//,/ }"
     return
   fi
+  
+  # Look for .yml/.yaml files in arguments (now properly parsed)
+  for arg in "${args[@]}"; do
+    if [[ "$arg" == *.yml ]] || [[ "$arg" == *.yaml ]]; then
+      if [[ -f "$arg" ]]; then
+        # Found a playbook file, extract hosts using simple sed
+        local playbook_hosts=$(sed -n 's/.*hosts:[[:space:]]*//p' "$arg" | head -1 | sed 's/,/ /g' | sed 's/[[:space:]]\+/ /g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+        if [[ -n "$playbook_hosts" ]]; then
+          echo "$playbook_hosts"
+          return
+        fi
+      fi
+    fi
+  done
   
   # Fall back to inventory file
   local inventory_file=""
@@ -93,6 +107,9 @@ function ansible_preauth() {
   
   # Connect to each host sequentially
   for host in $hosts; do
+    # Skip empty hosts
+    [[ -z "$host" ]] && continue
+    
     printf "  %-15s... " "$host"
     
     # Check if we already have an active session for this host
@@ -129,9 +146,24 @@ function ansible-playbook() {
 # Extract first argument (target hosts) from ansible command
 function extract_ansible_targets() {
   local args=($*)
-  # Skip options that start with - to find the target hosts argument
+  local skip_next=false
+  
+  # Skip options that start with - and their values to find the target hosts argument
   for arg in "${args[@]}"; do
-    if [[ "$arg" != -* ]] && [[ "$arg" != *"="* ]]; then
+    if [[ "$skip_next" == true ]]; then
+      skip_next=false
+      continue
+    fi
+    
+    if [[ "$arg" == -* ]]; then
+      # Check if this option takes a value (like -m, -a, -i, etc.)
+      if [[ "$arg" == "-m" ]] || [[ "$arg" == "-a" ]] || [[ "$arg" == "-i" ]] || [[ "$arg" == "-l" ]] || [[ "$arg" == "--limit" ]]; then
+        skip_next=true
+      fi
+      continue
+    fi
+    
+    if [[ "$arg" != *"="* ]]; then
       echo "$arg"
       return
     fi
