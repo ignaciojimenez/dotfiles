@@ -43,17 +43,133 @@ function count_limit_hosts() {
   fi
 }
 
+# Find inventory path from args or common defaults
+function find_inventory_path() {
+  local args=("$@")
+  local next_is_inv=false
+  for arg in "${args[@]}"; do
+    if $next_is_inv; then
+      # If a directory was provided, try common files inside
+      if [[ -d "$arg" ]]; then
+        if [[ -f "$arg/hosts" ]]; then
+          echo "$arg/hosts"
+          return
+        elif [[ -f "$arg/hosts.ini" ]]; then
+          echo "$arg/hosts.ini"
+          return
+        else
+          # Fallback: first *.ini or first file
+          local first_ini=$(find "$arg" -maxdepth 1 -type f -name "*.ini" | head -n1)
+          if [[ -n "$first_ini" ]]; then
+            echo "$first_ini"
+            return
+          fi
+          local first_file=$(find "$arg" -maxdepth 1 -type f | head -n1)
+          if [[ -n "$first_file" ]]; then
+            echo "$first_file"
+            return
+          fi
+        fi
+      fi
+      echo "$arg"
+      return
+    fi
+    case "$arg" in
+      -i)
+        next_is_inv=true
+        ;;
+      --inventory)
+        next_is_inv=true
+        ;;
+      --inventory=*)
+        inv_path="${arg#--inventory=}"
+        if [[ -d "$inv_path" ]]; then
+          if [[ -f "$inv_path/hosts" ]]; then
+            echo "$inv_path/hosts"
+            return
+          elif [[ -f "$inv_path/hosts.ini" ]]; then
+            echo "$inv_path/hosts.ini"
+            return
+          else
+            local first_ini=$(find "$inv_path" -maxdepth 1 -type f -name "*.ini" | head -n1)
+            if [[ -n "$first_ini" ]]; then
+              echo "$first_ini"
+              return
+            fi
+            local first_file=$(find "$inv_path" -maxdepth 1 -type f | head -n1)
+            if [[ -n "$first_file" ]]; then
+              echo "$first_file"
+              return
+            fi
+          fi
+        fi
+        echo "$inv_path"
+        return
+        ;;
+    esac
+  done
+  # Default filenames if not specified
+  # Prefer an inventory directory
+  if [[ -d "inventory" ]]; then
+    if [[ -f "inventory/hosts" ]]; then
+      echo "inventory/hosts"
+      return
+    elif [[ -f "inventory/hosts.ini" ]]; then
+      echo "inventory/hosts.ini"
+      return
+    else
+      local first_ini=$(find "inventory" -maxdepth 1 -type f -name "*.ini" | head -n1)
+      if [[ -n "$first_ini" ]]; then
+        echo "$first_ini"
+        return
+      fi
+      local first_file=$(find "inventory" -maxdepth 1 -type f | head -n1)
+      if [[ -n "$first_file" ]]; then
+        echo "$first_file"
+        return
+      fi
+    fi
+  fi
+  for inv in inventory hosts ansible_hosts; do
+    if [[ -f "$inv" ]]; then
+      echo "$inv"
+      return
+    fi
+  done
+}
+
+# List all hostnames from a simple INI inventory file
+function list_inventory_hosts() {
+  local inventory_file="$1"
+  [[ -z "$inventory_file" ]] && return
+  # Skip group headers, comments, empty lines, variable assignments; output first column (hostname)
+  grep -v '^\[' "$inventory_file" 2>/dev/null | grep -v '^#' | grep -v '^$' | grep -v '=' | awk '{print $1}' | tr '\n' ' ' | sed 's/[[:space:]]\+$//' || true
+}
+
+# Resolve hosts for a given group name from an INI inventory file
+function resolve_group_hosts() {
+  local inventory_file="$1"
+  local group_name="$2"
+  [[ -z "$inventory_file" || -z "$group_name" ]] && return
+  # Extract lines within the [group] section until the next [section]
+  awk -v grp="[$group_name]" '
+    $0 ~ /^\[/ { in_section = ($0 == grp) }
+    in_section && $0 !~ /^\[/ && $0 !~ /^\s*$/ && $0 !~ /^#/ && $0 !~ /=/ { print $1 }
+  ' "$inventory_file" | tr '\n' ' ' | sed 's/[[:space:]]\+$//' || true
+}
+
 # Get hosts for pre-authentication (from limit, playbook, or inventory)
 function get_preauth_hosts() {
   local args=("$@")  # Use array to preserve individual arguments
   local limit_hosts=$(extract_limit_hosts "$*")
-  
+  local inventory_file=$(find_inventory_path "${args[@]}")
+
   if [[ -n "$limit_hosts" ]]; then
     # Use hosts from limit parameter (replace commas with spaces)
     echo "${limit_hosts//,/ }"
     return
   fi
-  
+
   # Look for .yml/.yaml files in arguments (now properly parsed)
   for arg in "${args[@]}"; do
     if [[ "$arg" == *.yml ]] || [[ "$arg" == *.yaml ]]; then
@@ -61,25 +177,31 @@ function get_preauth_hosts() {
         # Found a playbook file, extract hosts using simple sed
         local playbook_hosts=$(sed -n 's/.*hosts:[[:space:]]*//p' "$arg" | head -1 | sed 's/,/ /g' | sed 's/[[:space:]]\+/ /g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
         if [[ -n "$playbook_hosts" ]]; then
+          # If hosts: all, expand to all inventory hosts
+          if [[ "$playbook_hosts" == "all" ]] && [[ -n "$inventory_file" ]]; then
+            list_inventory_hosts "$inventory_file"
+            return
+          fi
+          # If single token (likely a group), try to resolve via inventory
+          if [[ "$playbook_hosts" != *" "* ]] && [[ -n "$inventory_file" ]]; then
+            local group_hosts=$(resolve_group_hosts "$inventory_file" "$playbook_hosts")
+            if [[ -n "$group_hosts" ]]; then
+              echo "$group_hosts"
+              return
+            fi
+          fi
+          # Otherwise, return as-is (already space-separated if multiple)
           echo "$playbook_hosts"
           return
         fi
       fi
     fi
   done
-  
-  # Fall back to inventory file
-  local inventory_file=""
-  for inv in inventory hosts ansible_hosts; do
-    if [[ -f "$inv" ]]; then
-      inventory_file="$inv"
-      break
-    fi
-  done
-  
+
+  # Fall back to inventory file (list all hosts)
   if [[ -n "$inventory_file" ]]; then
-    # Extract hosts from inventory (skip group headers, comments, empty lines, and variable assignments)
-    grep -v '^\[' "$inventory_file" 2>/dev/null | grep -v '^#' | grep -v '^$' | grep -v '=' | awk '{print $1}' || echo ""
+    list_inventory_hosts "$inventory_file"
+    return
   fi
 }
 
