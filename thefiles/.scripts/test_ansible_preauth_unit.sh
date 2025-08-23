@@ -244,6 +244,57 @@ test_assert_contains "get_preauth_hosts_inventory" "pihole" "$(get_preauth_hosts
 rm -f /tmp/test_playbook.yml /tmp/test_inventory
 cd - > /dev/null
 
+# Test Suite: Inventory-aware Playbook Expansion
+echo -e "${CYAN}=== Testing Inventory-aware Playbook Expansion ===${NC}"
+
+# Create isolated temporary directory with inventory and playbooks
+TD=$(mktemp -d /tmp/ans_preauth.XXXXXX)
+
+# Inventory directory structure
+mkdir -p "$TD/inventory"
+cat > "$TD/inventory/hosts" << 'EOF'
+[pis]
+pihole
+dockassist
+EOF
+
+# Playbooks
+cat > "$TD/all_hosts_inv.yml" << 'EOF'
+---
+- name: All hosts (inventory)
+  hosts: all
+  tasks:
+    - debug: msg="test"
+EOF
+
+cat > "$TD/group_hosts_inv.yml" << 'EOF'
+---
+- name: Group hosts (inventory)
+  hosts: pis
+  tasks:
+    - debug: msg="test"
+EOF
+
+# 1) Using -i with inventory directory
+OUT1=$(get_preauth_hosts -i "$TD/inventory" "$TD/all_hosts_inv.yml")
+test_assert_contains "inv_dir_all_hosts_pihole" "pihole" "$OUT1" "Expand hosts: all via -i inventory dir includes pihole"
+test_assert_contains "inv_dir_all_hosts_dockassist" "dockassist" "$OUT1" "Expand hosts: all via -i inventory dir includes dockassist"
+
+# 2) Using --inventory=<dir>
+OUT2=$(get_preauth_hosts --inventory="$TD/inventory" "$TD/group_hosts_inv.yml")
+test_assert_contains "inv_dir_group_pis_pihole" "pihole" "$OUT2" "Resolve group 'pis' via --inventory dir includes pihole"
+test_assert_contains "inv_dir_group_pis_dockassist" "dockassist" "$OUT2" "Resolve group 'pis' via --inventory dir includes dockassist"
+
+# 3) Default inventory directory discovery (cd into TD)
+pushd "$TD" > /dev/null
+OUT3=$(get_preauth_hosts "all_hosts_inv.yml")
+test_assert_contains "default_inv_dir_all_hosts_pihole" "pihole" "$OUT3" "Default inventory/ discovery expands hosts: all"
+test_assert_contains "default_inv_dir_all_hosts_dockassist" "dockassist" "$OUT3" "Default inventory/ discovery expands hosts: all"
+popd > /dev/null
+
+# Cleanup
+rm -rf "$TD"
+
 # Test Suite: Integration scenarios for ansible-playbook wrapper logic
 echo -e "${CYAN}=== Testing ansible-playbook Wrapper Logic ===${NC}"
 
