@@ -11,3 +11,4 @@ source ~/.zsh_keys
 
 # Load interactive shell customizations
 source ~/.aliases $(detect_os)
+source /Users/choco/Documents/Workspaces/dotfiles/thefiles/.ansible_preauth
