@@ -65,10 +65,10 @@ macos(){
   fi
 
   # alias to pi utilities
-  if [ -f "${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi" ]; then
-    alias load_rpi="${WORKSPACE_PATH}/raspberrypi-ansible/load_rpi"
+  if [ -f "${WORKSPACE_PATH}/rpi-provisioner/provision_pi" ]; then
+    alias provision_rpi="${WORKSPACE_PATH}/rpi-provisioner/provision_pi"
   else
-    echo ".aliases: load_rpi not found" >&2
+    echo ".aliases: provision_rpi not found" >&2
   fi
 
   # Function for python
