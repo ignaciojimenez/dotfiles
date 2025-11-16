@@ -10,3 +10,10 @@ if [ -S "$SECRETIVE_SOCKET" ]; then
 elif [ -S "$HOME/.ssh/agent.sock" ]; then
     export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"  # fallback to standard SSH agent socket
 fi
+
+# Configure Ansible vault password script
+ANSIBLE_VAULT_PASSWORD_FILE="/Users/$USER/.scripts/ansible-vault-pass"
+if [ -f "${ANSIBLE_VAULT_PASSWORD_FILE}" ]; then
+    export ANSIBLE_VAULT_PASSWORD_FILE="${ANSIBLE_VAULT_PASSWORD_FILE}"
+fi
+
