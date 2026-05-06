@@ -1,8 +1,10 @@
 [user]
-	signingkey = /Users/choco/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/3c305c39928deee4e4e6c0cb738a470f.pub
+	signingkey = /Users/choco/.ssh/touchid-agent-git.pub
 	name = Ignacio Jimenez
 	email = i.jimenezpi@gmail.com
 [commit]
 	gpgSign = true
 [gpg]
 	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = /Users/choco/.ssh/allowed_signers
