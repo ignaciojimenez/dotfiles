@@ -2,7 +2,7 @@
 # Shell-agnostic profile for both interactive and non-interactive sessions
 
 # Core PATH settings
-export PATH="/usr/local/opt/openjdk/bin:/usr/local/sbin:/Users/choco/Library/Python/3.11/bin:$PATH"
+export PATH="/usr/local/opt/openjdk/bin:/usr/local/sbin:/Users/choco/Library/Python/3.11/bin:/Users/choco/.local/bin:$PATH"
 
 # Windsurf PATH
 export PATH="/Users/choco/.codeium/windsurf/bin:$PATH"
