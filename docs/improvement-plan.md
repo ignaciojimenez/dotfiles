@@ -407,7 +407,7 @@ eval "$(mise activate zsh)"
 - [x] 2026-05-09 — Step 1: `profile_bootstrap` deleted (commit 971db61)
 - [x] 2026-05-09 — Step 2: `/Users/choco` de-hardcoded; .gitconfig + .ansible_preauth added to symlink whitelist; bootstrap.sh `pwd -P` fix (commit 4f028e5)
 - [ ] Step 3 — Drop bash/windows/freebsd; KEEP zsh-on-Linux **(awaiting decision on Linux unix() body)**
-- [ ] Step 4 — Replace `.ansible_preauth` **(awaiting greenlight + empirical validation against real inventory; full design recorded above)**
+- [x] 2026-05-09 — Step 4: `.ansible_preauth` replaced with the 57-line wrapper. Validated against the live raspberrypi-ansible inventory (`ansible all -m ping`): 4 reachable hosts warmed in sequence with one TouchID prompt each; the subsequent ansible run multiplexed through the masters with zero further TouchID prompts. 2 stale inventory entries (`devpi`, `pihole`) failed fast in both warmup and ansible run with the same DNS/timeout errors — wrapper behavior is correct. Test scripts removed.
 - [x] 2026-05-09 — Step 5: env_bootstrap.sh rewritten + Brewfile added (commit 0f0f3bb)
 - [x] 2026-05-09 — Step 6: modern CLI baseline wired (guarded), shell-load defensive guards (commit cdeb59d)
 - [x] 2026-05-09 — Step 7a: GitHub Actions lint workflow added

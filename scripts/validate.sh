@@ -48,8 +48,6 @@ BASH_FILES=(
   thefiles/.shell_options
   thefiles/.scripts/brew_maintain
   thefiles/.scripts/ansible-vault-pass
-  thefiles/.scripts/test_ansible_integration.sh
-  thefiles/.scripts/test_ansible_preauth_unit.sh
 )
 
 ZSH_FILES=(

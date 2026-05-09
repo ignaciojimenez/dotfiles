@@ -1,325 +1,57 @@
 #!/bin/bash
+# Pre-warm SSH ControlMaster sessions before Ansible runs.
+#
+# Why: ansible's parallel forks can fire 5+ concurrent SSH connections,
+# each triggering a TouchID prompt. With this wrapper, hosts are warmed
+# sequentially up front (one calm TouchID prompt per host); ansible's
+# subsequent forks multiplex through the warm masters with no further
+# prompts.
+#
+# Approach: delegate host enumeration to ansible itself via
+# `--list-hosts`. By definition the result matches the run that follows.
 
-# Ansible SSH Pre-Authentication Configuration
-# Provides wrapper functions for ansible and ansible-playbook to handle
-# TouchID/Secretive authentication challenges with automatic session caching
-
-# Extract hosts from --limit or -l parameter
-function extract_limit_hosts() {
-  local args="$*"
-  local limit_value=""
-  
-  # Use simpler pattern matching approach
-  # Handle --limit=value format
-  if [[ "$args" == *"--limit="* ]]; then
-    limit_value=$(echo "$args" | sed -n 's/.*--limit=\([^[:space:]]*\).*/\1/p')
-  # Handle --limit value format  
-  elif [[ "$args" == *"--limit "* ]]; then
-    limit_value=$(echo "$args" | sed -n 's/.*--limit \([^[:space:]]*\).*/\1/p')
-  # Handle -l=value format
-  elif [[ "$args" == *"-l="* ]]; then
-    limit_value=$(echo "$args" | sed -n 's/.*-l=\([^[:space:]]*\).*/\1/p')
-  # Handle -l value format
-  elif [[ "$args" == *"-l "* ]]; then
-    limit_value=$(echo "$args" | sed -n 's/.*-l \([^[:space:]]*\).*/\1/p')
-  fi
-  
-  echo "$limit_value"
+# Extract hostnames from `ansible[-playbook] --list-hosts` output.
+# Both formats put hostnames as indented bare tokens; group / play /
+# pattern headers always contain a colon or parentheses and so don't
+# match this pattern.
+__preauth_extract_hosts() {
+  awk '/^[[:space:]]+[A-Za-z0-9._-]+$/ {gsub(/^[[:space:]]+/,""); print}'
 }
 
-# Count hosts in a limit specification
-function count_limit_hosts() {
-  local limit="$1"
-  if [[ -z "$limit" ]]; then
-    echo "0"
-    return
-  fi
-  
-  # Count commas + 1 for comma-separated hosts
-  if [[ "$limit" == *","* ]]; then
-    echo $(($(echo "$limit" | tr -cd ',' | wc -c) + 1))
-  else
-    echo "1"
-  fi
+# Warm one host: skip if its ControlMaster is already alive, else open
+# a daemonized -fN session (triggers exactly one TouchID prompt).
+__preauth_warm_host() {
+  local h="$1"
+  printf "  %-20s ... " "$h"
+  if ssh -O check "$h" 2>/dev/null; then echo "✓ cached"; return; fi
+  if ssh -fN -o ConnectTimeout=8 "$h" 2>/dev/null; then echo "✓"
+  else echo "✗"; fi
 }
 
-# Find inventory path from args or common defaults
-function find_inventory_path() {
-  local args=("$@")
-  local next_is_inv=false
-  for arg in "${args[@]}"; do
-    if $next_is_inv; then
-      # If a directory was provided, try common files inside
-      if [[ -d "$arg" ]]; then
-        if [[ -f "$arg/hosts" ]]; then
-          echo "$arg/hosts"
-          return
-        elif [[ -f "$arg/hosts.ini" ]]; then
-          echo "$arg/hosts.ini"
-          return
-        else
-          # Fallback: first *.ini or first file
-          local first_ini=$(find "$arg" -maxdepth 1 -type f -name "*.ini" | head -n1)
-          if [[ -n "$first_ini" ]]; then
-            echo "$first_ini"
-            return
-          fi
-          local first_file=$(find "$arg" -maxdepth 1 -type f | head -n1)
-          if [[ -n "$first_file" ]]; then
-            echo "$first_file"
-            return
-          fi
-        fi
-      fi
-      echo "$arg"
-      return
-    fi
-    case "$arg" in
-      -i)
-        next_is_inv=true
-        ;;
-      --inventory)
-        next_is_inv=true
-        ;;
-      --inventory=*)
-        inv_path="${arg#--inventory=}"
-        if [[ -d "$inv_path" ]]; then
-          if [[ -f "$inv_path/hosts" ]]; then
-            echo "$inv_path/hosts"
-            return
-          elif [[ -f "$inv_path/hosts.ini" ]]; then
-            echo "$inv_path/hosts.ini"
-            return
-          else
-            local first_ini=$(find "$inv_path" -maxdepth 1 -type f -name "*.ini" | head -n1)
-            if [[ -n "$first_ini" ]]; then
-              echo "$first_ini"
-              return
-            fi
-            local first_file=$(find "$inv_path" -maxdepth 1 -type f | head -n1)
-            if [[ -n "$first_file" ]]; then
-              echo "$first_file"
-              return
-            fi
-          fi
-        fi
-        echo "$inv_path"
-        return
-        ;;
+# Skip preauth on ansible flags where it would be wasted or harmful:
+#   -k / --ask-pass : password auth (typically a brand-new host without
+#                     our SSH key — `ssh -fN` would just fail noisily)
+#   query modes     : --list-hosts / --syntax-check / --list-tasks /
+#                     --list-tags : ansible doesn't connect at all
+__preauth_should_skip() {
+  for a in "$@"; do
+    case "$a" in
+      -k|--ask-pass|--list-hosts|--syntax-check|--list-tasks|--list-tags)
+        return 0 ;;
     esac
   done
-  # Default filenames if not specified
-  # Prefer an inventory directory
-  if [[ -d "inventory" ]]; then
-    if [[ -f "inventory/hosts" ]]; then
-      echo "inventory/hosts"
-      return
-    elif [[ -f "inventory/hosts.ini" ]]; then
-      echo "inventory/hosts.ini"
-      return
-    else
-      local first_ini=$(find "inventory" -maxdepth 1 -type f -name "*.ini" | head -n1)
-      if [[ -n "$first_ini" ]]; then
-        echo "$first_ini"
-        return
-      fi
-      local first_file=$(find "inventory" -maxdepth 1 -type f | head -n1)
-      if [[ -n "$first_file" ]]; then
-        echo "$first_file"
-        return
-      fi
-    fi
-  fi
-  for inv in inventory hosts ansible_hosts; do
-    if [[ -f "$inv" ]]; then
-      echo "$inv"
-      return
-    fi
-  done
+  return 1
 }
 
-# List all hostnames from a simple INI inventory file
-function list_inventory_hosts() {
-  local inventory_file="$1"
-  [[ -z "$inventory_file" ]] && return
-  # Skip group headers, comments, empty lines, variable assignments; output first column (hostname)
-  grep -v '^\[' "$inventory_file" 2>/dev/null | grep -v '^#' | grep -v '^$' | grep -v '=' | awk '{print $1}' | tr '\n' ' ' | sed 's/[[:space:]]\+$//' || true
-}
-
-# Resolve hosts for a given group name from an INI inventory file
-function resolve_group_hosts() {
-  local inventory_file="$1"
-  local group_name="$2"
-  [[ -z "$inventory_file" || -z "$group_name" ]] && return
-  # Extract lines within the [group] section until the next [section]
-  awk -v grp="[$group_name]" '
-    $0 ~ /^\[/ { in_section = ($0 == grp) }
-    in_section && $0 !~ /^\[/ && $0 !~ /^\s*$/ && $0 !~ /^#/ && $0 !~ /=/ { print $1 }
-  ' "$inventory_file" | tr '\n' ' ' | sed 's/[[:space:]]\+$//' || true
-}
-
-# Get hosts for pre-authentication (from limit, playbook, or inventory)
-function get_preauth_hosts() {
-  local args=("$@")  # Use array to preserve individual arguments
-  local limit_hosts=$(extract_limit_hosts "$*")
-  local inventory_file=$(find_inventory_path "${args[@]}")
-
-  if [[ -n "$limit_hosts" ]]; then
-    # Use hosts from limit parameter (replace commas with spaces)
-    echo "${limit_hosts//,/ }"
-    return
-  fi
-
-  # Look for .yml/.yaml files in arguments (now properly parsed)
-  for arg in "${args[@]}"; do
-    if [[ "$arg" == *.yml ]] || [[ "$arg" == *.yaml ]]; then
-      if [[ -f "$arg" ]]; then
-        # Found a playbook file, extract hosts using simple sed
-        local playbook_hosts=$(sed -n 's/.*hosts:[[:space:]]*//p' "$arg" | head -1 | sed 's/,/ /g' | sed 's/[[:space:]]\+/ /g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-        if [[ -n "$playbook_hosts" ]]; then
-          # If hosts: all, expand to all inventory hosts
-          if [[ "$playbook_hosts" == "all" ]] && [[ -n "$inventory_file" ]]; then
-            list_inventory_hosts "$inventory_file"
-            return
-          fi
-          # If single token (likely a group), try to resolve via inventory
-          if [[ "$playbook_hosts" != *" "* ]] && [[ -n "$inventory_file" ]]; then
-            local group_hosts=$(resolve_group_hosts "$inventory_file" "$playbook_hosts")
-            if [[ -n "$group_hosts" ]]; then
-              echo "$group_hosts"
-              return
-            fi
-          fi
-          # Otherwise, return as-is (already space-separated if multiple)
-          echo "$playbook_hosts"
-          return
-        fi
-      fi
-    fi
-  done
-
-  # Fall back to inventory file (list all hosts)
-  if [[ -n "$inventory_file" ]]; then
-    list_inventory_hosts "$inventory_file"
-    return
-  fi
-}
-
-# Ansible SSH pre-authentication for Secretive/TouchID
-function ansible_preauth() {
-  local args="$*"
-  
-  # Check if we have active SSH sessions (< 9 minutes old)
-  local control_dir="$HOME/.ssh"
-  local active_sessions=$(find "$control_dir" -name "control:*" -newer <(date -v-9M '+%Y%m%d%H%M.%S') 2>/dev/null | wc -l)
-  
-  if [[ $active_sessions -gt 0 ]]; then
-    return 0  # Active sessions exist, skip pre-auth
-  fi
-  
+ansible_preauth() {
+  local cmd="$1"; shift
+  __preauth_should_skip "$@" && return 0
+  local hosts
+  hosts=$(command "$cmd" "$@" --list-hosts 2>/dev/null | __preauth_extract_hosts)
+  [[ -z "$hosts" ]] && return 0
   echo "🔐 Pre-authenticating SSH sessions for Ansible..."
-  
-  # Get hosts for pre-authentication
-  local hosts=$(get_preauth_hosts "$args")
-  
-  if [[ -z "$hosts" ]]; then
-    echo "  No hosts found for pre-authentication"
-    return 0
-  fi
-  
-  # Connect to each host sequentially
-  for host in $hosts; do
-    # Skip empty hosts
-    [[ -z "$host" ]] && continue
-    
-    printf "  %-15s... " "$host"
-    
-    # Check if we already have an active session for this host
-    if ssh -O check "$host" 2>/dev/null; then
-      echo "✓ (cached)"
-      continue
-    fi
-    
-    # Connect to establish ControlMaster session
-    if timeout 15 ssh -o ConnectTimeout=8 -o BatchMode=no "$host" "exit" 2>/dev/null; then
-      echo "✓"
-    else
-      echo "✗"
-    fi
-  done
-  
-  echo "✓ SSH sessions cached for Ansible"
+  while IFS= read -r h; do __preauth_warm_host "$h"; done <<< "$hosts"
 }
 
-# Wrapper for ansible-playbook with automatic pre-authentication
-function ansible-playbook() {
-  local limit_hosts=$(extract_limit_hosts "$*")
-  local host_count=$(count_limit_hosts "$limit_hosts")
-  
-  # Pre-auth only if targeting multiple hosts or no limit specified
-  if [[ $host_count -eq 0 ]] || [[ $host_count -gt 1 ]]; then
-    ansible_preauth "$@"
-  fi
-  
-  # Run the actual ansible-playbook command
-  command ansible-playbook "$@"
-}
-
-# Extract first argument (target hosts) from ansible command
-function extract_ansible_targets() {
-  local args=($*)
-  local skip_next=false
-  
-  # Skip options that start with - and their values to find the target hosts argument
-  for arg in "${args[@]}"; do
-    if [[ "$skip_next" == true ]]; then
-      skip_next=false
-      continue
-    fi
-    
-    if [[ "$arg" == -* ]]; then
-      # Check if this option takes a value (like -m, -a, -i, etc.)
-      if [[ "$arg" == "-m" ]] || [[ "$arg" == "-a" ]] || [[ "$arg" == "-i" ]] || [[ "$arg" == "-l" ]] || [[ "$arg" == "--limit" ]]; then
-        skip_next=true
-      fi
-      continue
-    fi
-    
-    if [[ "$arg" != *"="* ]]; then
-      echo "$arg"
-      return
-    fi
-  done
-}
-
-# Wrapper for ansible with automatic pre-authentication  
-function ansible() {
-  local limit_hosts=$(extract_limit_hosts "$*")
-  local host_count=$(count_limit_hosts "$limit_hosts")
-  local should_preauth=false
-  
-  if [[ $host_count -gt 1 ]]; then
-    # Multiple hosts in limit parameter
-    should_preauth=true
-  elif [[ $host_count -eq 1 ]]; then
-    # Single host in limit parameter - don't pre-auth
-    should_preauth=false
-  else
-    # No limit specified, check direct host targeting
-    local target_hosts=$(extract_ansible_targets "$@")
-    if [[ "$target_hosts" == "all" ]] || [[ "$target_hosts" == *","* ]] || [[ "$target_hosts" == *":"* ]]; then
-      # Multiple hosts targeted directly
-      should_preauth=true
-    else
-      # Single host targeted directly - don't pre-auth
-      should_preauth=false
-    fi
-  fi
-  
-  if [[ "$should_preauth" == "true" ]]; then
-    ansible_preauth "$@"
-  fi
-  
-  # Run the actual ansible command
-  command ansible "$@"
-}
+ansible()          { ansible_preauth ansible          "$@"; command ansible          "$@"; }
+ansible-playbook() { ansible_preauth ansible-playbook "$@"; command ansible-playbook "$@"; }
