@@ -404,10 +404,19 @@ eval "$(mise activate zsh)"
 - [x] 2026-05-07 — Initial assessment
 - [x] 2026-05-09 — Plan stored at `docs/improvement-plan.md`
 - [x] 2026-05-09 — `bootstrap.sh.bak` deleted (manual)
-- [ ] Step 1 — Delete `profile_bootstrap`
-- [ ] Step 2 — De-hardcode `/Users/choco`
-- [ ] Step 3 — Drop bash/unix/windows
-- [ ] Step 4 — Replace `.ansible_preauth`
-- [ ] Step 5 — Fix `env_bootstrap.sh` + Brewfile
-- [ ] Step 6 — Modern CLI baseline
-- [ ] Step 7 — `decisions.md` + shellcheck CI
+- [x] 2026-05-09 — Step 1: `profile_bootstrap` deleted (commit 971db61)
+- [x] 2026-05-09 — Step 2: `/Users/choco` de-hardcoded; .gitconfig + .ansible_preauth added to symlink whitelist; bootstrap.sh `pwd -P` fix (commit 4f028e5)
+- [ ] Step 3 — Drop bash/windows/freebsd; KEEP zsh-on-Linux **(awaiting decision on Linux unix() body)**
+- [ ] Step 4 — Replace `.ansible_preauth` **(awaiting greenlight + empirical validation against real inventory; full design recorded above)**
+- [x] 2026-05-09 — Step 5: env_bootstrap.sh rewritten + Brewfile added (commit 0f0f3bb)
+- [x] 2026-05-09 — Step 6: modern CLI baseline wired (guarded), shell-load defensive guards (commit cdeb59d)
+- [x] 2026-05-09 — Step 7a: GitHub Actions lint workflow added
+- [x] 2026-05-09 — Step 7b: scripts/validate.sh sandboxed validation harness added
+- [ ] Step 7c — `docs/decisions.md` (5 one-liners)
+
+All execution work is on branch `dotfiles-cleanup`. Validation: `scripts/validate.sh` reports 23 passed, 0 failed, 2 skipped (shellcheck not yet installed; Brewfile additions not yet `brew bundle`'d — both fixed by running `brew bundle --file=thefiles/Brewfile`).
+
+## Open decisions
+
+1. **Step 3 — what does the Linux `unix()` branch do?** Options: (a) install zsh + a Linux equivalent of the Brewfile via apt/dnf, (b) just symlink dotfiles and let the user manage packages manually, (c) ship a `Brewfile.linux` that `brew bundle` can consume since Homebrew now runs on Linux. Recommendation: **(b)** — minimal, predictable, and respects the "occasional Linux server" use case. Document in `docs/decisions.md`.
+2. **Step 4 — when to swap the Ansible wrapper.** Recommendation: do it on a Saturday morning with `ansible all -m ping` against the real inventory as the validation. Then `git rm thefiles/.scripts/test_ansible_*.sh`.
