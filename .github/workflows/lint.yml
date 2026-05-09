@@ -9,7 +9,7 @@ jobs:
   shellcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Run shellcheck
         # SC1090/SC1091: dynamic source paths (~/.foo, $SCRIPT_DIR/...) — by design.
@@ -35,7 +35,7 @@ jobs:
   shell-syntax:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install zsh
         run: sudo apt-get update && sudo apt-get install -y zsh
@@ -65,13 +65,13 @@ jobs:
   brewfile:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Validate Brewfile parses
         run: brew bundle list --file=thefiles/Brewfile
 
   bootstrap-dry-run:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Symlink dry-run
         run: ./bootstrap.sh --dry-run
