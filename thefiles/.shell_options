@@ -3,7 +3,7 @@
 # History settings
 HISTSIZE=50000
 HISTFILESIZE=100000
-SAVEHIST=$HISTSIZE
+export SAVEHIST=$HISTSIZE  # exported so shellcheck doesn't flag it; zsh reads it natively
 
 # Common environment settings
 export HISTCONTROL=ignoreboth    # Ignore duplicates and space-prefixed

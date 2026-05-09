@@ -50,8 +50,9 @@ common(){
       alias egrep='egrep --color=auto'
   fi
 
-  # Reload the shell (i.e. invoke as a login shell)
-  alias reload="exec $SHELL -l"
+  # Reload the shell (i.e. invoke as a login shell). Single-quoted so
+  # $SHELL is resolved at use-time rather than at alias-definition.
+  alias reload='exec $SHELL -l'
 
   # ssh forcing password authentication
   alias sshp="ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no"
@@ -63,19 +64,18 @@ common(){
 }
 
 macos(){
-  USERSPACE_PATH="/Users/$USER"
-  WORKSPACE_PATH="${USERSPACE_PATH}/Documents/Workspaces"
+  # Aliases below use single quotes so $HOME is resolved at use-time.
 
   # alias to launch brew_maintain
-  if [ -f "${USERSPACE_PATH}/.scripts/brew_maintain" ]; then
-    alias bmaintain="${USERSPACE_PATH}/.scripts/brew_maintain"
+  if [ -f "$HOME/.scripts/brew_maintain" ]; then
+    alias bmaintain='$HOME/.scripts/brew_maintain'
   else
     echo ".aliases: brew_maintain not found" >&2
   fi
 
   # alias to pi utilities
-  if [ -f "${WORKSPACE_PATH}/rpi-provisioner/provision_pi" ]; then
-    alias provision_rpi="${WORKSPACE_PATH}/rpi-provisioner/provision_pi"
+  if [ -f "$HOME/Documents/Workspaces/rpi-provisioner/provision_pi" ]; then
+    alias provision_rpi='$HOME/Documents/Workspaces/rpi-provisioner/provision_pi'
   else
     echo ".aliases: provision_rpi not found" >&2
   fi
@@ -97,8 +97,10 @@ macos(){
   alias showh="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
   alias hideh="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
 
-  # Send HTTP requests
-  # One of @janmoesen’s ProTip™s
+  # Send HTTP requests via lwp-request (libwww-perl). Define-time
+  # expansion is intentional here — each iteration captures a different
+  # $method into its own alias.
+  # shellcheck disable=SC2139
   for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
     alias "${method}"="lwp-request -m '${method}'"
   done
