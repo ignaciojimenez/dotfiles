@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Backups / scratch
+*.bak
+*.backup
+*.orig
+*.log
+
+# Secrets — never commit env files. assume the repo is public.
+.env
+.env.*
+.envrc.local
+
+# Local-only overrides
+*.local
