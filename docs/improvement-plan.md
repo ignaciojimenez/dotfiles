@@ -412,7 +412,7 @@ eval "$(mise activate zsh)"
 - [x] 2026-05-09 — Step 6: modern CLI baseline wired (guarded), shell-load defensive guards (commit cdeb59d)
 - [x] 2026-05-09 — Step 7a: GitHub Actions lint workflow added
 - [x] 2026-05-09 — Step 7b: scripts/validate.sh sandboxed validation harness added
-- [ ] Step 7c — `docs/decisions.md` (5 one-liners)
+- [x] 2026-05-09 — Step 7c: `docs/decisions.md` written (5 one-liners covering zsh-only, Linux graceful-degradation, ansible wrapper delegation, Brewfile, touchid-agent priority).
 
 All execution work is on branch `dotfiles-cleanup`. Validation: `scripts/validate.sh` reports 23 passed, 0 failed, 2 skipped (shellcheck not yet installed; Brewfile additions not yet `brew bundle`'d — both fixed by running `brew bundle --file=thefiles/Brewfile`).
 
