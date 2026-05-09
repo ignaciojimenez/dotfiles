@@ -152,10 +152,20 @@ macos() {
 }
 
 unix() {
-  # Step 3 of docs/improvement-plan.md will populate this:
-  #   - Linux package install (apt/dnf/pacman) for the Brewfile equivalents
-  #   - gpg-agent ssh-socket fallback for .security
-  echo "==> unix bootstrap is currently a no-op (see docs/improvement-plan.md §Step 3)"
+  # Linux is a secondary, occasional-use target. We deliberately do
+  # *not* install packages here: server/VM contexts vary too much
+  # across distros and you usually want minimal install footprint.
+  # The dotfiles already symlinked into $HOME degrade gracefully —
+  # every modern-CLI init in .zshrc is `command -v`-guarded, so a
+  # missing tool is a no-op, not an error.
+  echo "==> Linux: dotfiles symlinked. No package install (by design)."
+  echo "==> If you want the modern CLI baseline on this host, install"
+  echo "==> manually with the system package manager, e.g.:"
+  echo "    apt install zsh fzf ripgrep fd-find bat eza zoxide direnv"
+  echo "    # then add fzf integration once: \$(brew --prefix)/opt/fzf/install"
+  if ! command -v zsh >/dev/null 2>&1; then
+    echo "==> WARNING: zsh not found on this host. Install it before sourcing the dotfiles."
+  fi
 }
 
 # ─── Main ────────────────────────────────────────────────────────────────────

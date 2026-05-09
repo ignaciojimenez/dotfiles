@@ -39,8 +39,6 @@ BASH_FILES=(
   env_bootstrap.sh
   thefiles/.ansible_preauth
   thefiles/.aliases
-  thefiles/.bash_options
-  thefiles/.bash_profile
   thefiles/.common_functions
   thefiles/.exports
   thefiles/.profile

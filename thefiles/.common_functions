@@ -1,18 +1,12 @@
 #!/bin/bash
 
-function detect_os() {
-  # detecting OS type
-  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    type="unix"
-  elif [[ "$OSTYPE" == "darwin"* ]]; then
-    type="macos"
-  elif [[ "$OSTYPE" == "win32" ]]; then
-    type="windows"
-  elif [[ "$OSTYPE" == "freebsd"* ]]; then
-    type="unix"
-    Echo "$OSTYPE detected and using linux defaults, it might not be what you want"
-  else
-    type="unkown"
-  fi
-  echo $type
+# Returns "macos" on Darwin, "unix" on Linux, "unknown" otherwise.
+# "unix" exists for occasional Linux server use; non-macOS hosts get
+# dotfiles symlinks but no automated package install (see env_bootstrap.sh).
+detect_os() {
+  case "$OSTYPE" in
+    darwin*)    echo "macos" ;;
+    linux-gnu*) echo "unix"  ;;
+    *)          echo "unknown" ;;
+  esac
 }

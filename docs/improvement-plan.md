@@ -406,7 +406,7 @@ eval "$(mise activate zsh)"
 - [x] 2026-05-09 — `bootstrap.sh.bak` deleted (manual)
 - [x] 2026-05-09 — Step 1: `profile_bootstrap` deleted (commit 971db61)
 - [x] 2026-05-09 — Step 2: `/Users/choco` de-hardcoded; .gitconfig + .ansible_preauth added to symlink whitelist; bootstrap.sh `pwd -P` fix (commit 4f028e5)
-- [ ] Step 3 — Drop bash/windows/freebsd; KEEP zsh-on-Linux **(awaiting decision on Linux unix() body)**
+- [x] 2026-05-09 — Step 3: bash/windows/freebsd dropped; zsh-on-Linux kept as graceful-degradation secondary. Decision: option **A** — symlinks only on Linux, no package install. .security gained gpg-agent fallback. .common_functions::detect_os simplified to macos|unix|unknown. bootstrap.sh dropped detect_shell, gained require_zsh, ~/Workspaces guarded on macOS-only.
 - [x] 2026-05-09 — Step 4: `.ansible_preauth` replaced with the 57-line wrapper. Validated against the live raspberrypi-ansible inventory (`ansible all -m ping`): 4 reachable hosts warmed in sequence with one TouchID prompt each; the subsequent ansible run multiplexed through the masters with zero further TouchID prompts. 2 stale inventory entries (`devpi`, `pihole`) failed fast in both warmup and ansible run with the same DNS/timeout errors — wrapper behavior is correct. Test scripts removed.
 - [x] 2026-05-09 — Step 5: env_bootstrap.sh rewritten + Brewfile added (commit 0f0f3bb)
 - [x] 2026-05-09 — Step 6: modern CLI baseline wired (guarded), shell-load defensive guards (commit cdeb59d)
@@ -418,5 +418,4 @@ All execution work is on branch `dotfiles-cleanup`. Validation: `scripts/validat
 
 ## Open decisions
 
-1. **Step 3 — what does the Linux `unix()` branch do?** Options: (a) install zsh + a Linux equivalent of the Brewfile via apt/dnf, (b) just symlink dotfiles and let the user manage packages manually, (c) ship a `Brewfile.linux` that `brew bundle` can consume since Homebrew now runs on Linux. Recommendation: **(b)** — minimal, predictable, and respects the "occasional Linux server" use case. Document in `docs/decisions.md`.
-2. **Step 4 — when to swap the Ansible wrapper.** Recommendation: do it on a Saturday morning with `ansible all -m ping` against the real inventory as the validation. Then `git rm thefiles/.scripts/test_ansible_*.sh`.
+(none — all execution items resolved as of 2026-05-09)

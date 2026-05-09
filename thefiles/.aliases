@@ -105,7 +105,11 @@ macos(){
 }
 
 unix(){
-  echo "No custom aliases for unix yet" >&2
+  # No Linux-specific aliases yet. The common() block above is
+  # already cross-platform; modern-CLI replacements (eza/bat) are
+  # gated on `command -v` so they activate automatically when
+  # installed.
+  :
 }
 
 # setting up common aliases

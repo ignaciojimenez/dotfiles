@@ -76,55 +76,19 @@ parse_args() {
     done
 }
 
-# Detect shell type
-detect_shell() {
-    # First try to detect current shell
-    if [ -n "$SHELL" ]; then
-        case "$SHELL" in
-            */zsh)
-                echo "zsh"
-                return
-                ;;
-            */bash)
-                echo "bash"
-                return
-                ;;
-        esac
+# Require zsh. We support zsh on macOS as primary and zsh on Linux as
+# secondary; bash was dropped from the dotfiles in 2026-05.
+require_zsh() {
+    if ! command -v zsh >/dev/null 2>&1; then
+        error "zsh is required but not installed."
+        error "Install it first:  apt install zsh   |   dnf install zsh   |   brew install zsh"
+        exit 1
     fi
-
-    # If $SHELL is not set, check user's default shell from passwd
-    local default_shell
-    default_shell=$(basename "$(grep "^${USER}:" /etc/passwd | cut -d: -f7)")
-    case "$default_shell" in
-        zsh|bash)
-            echo "$default_shell"
-            return
-            ;;
-        *)
-            error "Unsupported shell: $default_shell"
-            error "Only zsh and bash are supported"
-            exit 1
-            ;;
-    esac
 }
 
-# Get shell-specific files
-get_shell_files() {
-    local shell_type="$1"
-    local files=""
-    
-    # Shell-specific files
-    case "$shell_type" in
-        zsh)
-            files=".zshrc .zprofile .zsh_options .zsh_keys"
-            ;;
-        bash)
-            files=".bash_profile .bash_options"
-            ;;
-    esac
-    
-    # Common files for all shells
-    echo "$files .profile .shell_options .aliases .exports .common_functions .security .scripts .gitconfig .ansible_preauth"
+# All dotfiles symlinked into $HOME. No shell branching — zsh-only.
+get_dotfiles() {
+    echo ".zshrc .zprofile .zsh_options .zsh_keys .profile .shell_options .aliases .exports .common_functions .security .scripts .gitconfig .ansible_preauth"
 }
 
 # Compare files or symlinks
@@ -163,18 +127,15 @@ create_backup() {
 
 # Create symlinks with smart backup
 create_symlinks() {
-    local shell_type="$1"
+    local os_type="$1"
     local changes_made=0
     local backups_made=0
-    
+
     # Get list of files to process
-    for file in $(get_shell_files "$shell_type"); do
+    for file in $(get_dotfiles); do
         local src="${SCRIPT_DIR}/thefiles/${file}"
         local dst="${HOME}/${file}"
-        
-        # Skip special entries
-        [[ "$file" == "." ]] || [[ "$file" == ".." ]] || [[ "$file" == ".git" ]] || [[ "$file" == ".gitignore" ]] || [[ "$file" == ".DS_Store" ]] && continue
-        
+
         # Check if source exists
         if [[ ! -e "$src" ]]; then
             warn "Source file not found: $src"
@@ -219,15 +180,17 @@ create_symlinks() {
         fi
     done
     
-    # Check if the directory exists
-    if [ -d "/Users/$USER/Documents/Workspaces" ]; then
-        # Create a symlink in the user's home directory
+    # macOS-specific shortcut: ~/Workspaces -> ~/Documents/Workspaces.
+    # Idempotent: skips if target absent or shortcut already exists.
+    if [[ "$os_type" == "macos" ]] \
+       && [[ -d "$HOME/Documents/Workspaces" ]] \
+       && [[ ! -e "$HOME/Workspaces" ]]; then
         if [[ "$DRY_RUN" -eq 0 ]]; then
-            ln -s "/Users/$USER/Documents/Workspaces" "$HOME/Workspaces"
-            info "Created symlink: $HOME/Workspaces -> /Users/$USER/Documents/Workspaces"
+            ln -s "$HOME/Documents/Workspaces" "$HOME/Workspaces"
+            info "Created symlink: $HOME/Workspaces -> $HOME/Documents/Workspaces"
             ((changes_made++))
         else
-            info "[DRY-RUN] Would create symlink: $HOME/Workspaces -> /Users/$USER/Documents/Workspaces"
+            info "[DRY-RUN] Would create symlink: $HOME/Workspaces -> $HOME/Documents/Workspaces"
         fi
     fi
     
@@ -253,19 +216,17 @@ main() {
     fi
 
     # Detect OS type
-    local os_type shell_type
+    local os_type
     os_type=$(detect_os)
     if [[ "$os_type" != "unix" && "$os_type" != "macos" ]]; then
         error "Unsupported OS type: $os_type"
         exit 1
     fi
     info "Detected OS: $os_type"
-    
-    # Detect shell type
-    shell_type=$(detect_shell)
-    info "Detected shell: $shell_type"
-    
-    create_symlinks "$shell_type"
+
+    require_zsh
+
+    create_symlinks "$os_type"
     
     if [[ "$KICKSTART" -eq 1 ]]; then
         info "Running environment bootstrap"

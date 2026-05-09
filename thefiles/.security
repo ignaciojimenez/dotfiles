@@ -3,20 +3,28 @@
 # Set restrictive umask - only user can read/write/execute new files
 umask 077
 
-# SSH agent selection: prefer touchid-agent, fall back to Secretive, then standard agent.
+# SSH agent selection. Priority order:
+#   1. touchid-agent     (macOS — Secure Enclave)
+#   2. Secretive         (macOS — alternative SE-backed agent)
+#   3. gpg-agent         (Linux — when configured for SSH)
+#   4. ~/.ssh/agent.sock (any — generic ssh-agent)
 TOUCHID_AGENT_SOCKET="$HOME/Library/Caches/touchid-agent/agent.sock"
 SECRETIVE_SOCKET="$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
 if [ -S "$TOUCHID_AGENT_SOCKET" ]; then
     export SSH_AUTH_SOCK="$TOUCHID_AGENT_SOCKET"
 elif [ -S "$SECRETIVE_SOCKET" ]; then
     export SSH_AUTH_SOCK="$SECRETIVE_SOCKET"
+elif command -v gpgconf >/dev/null 2>&1; then
+    GPG_SSH_SOCK="$(gpgconf --list-dirs agent-ssh-socket 2>/dev/null)"
+    [ -n "$GPG_SSH_SOCK" ] && [ -S "$GPG_SSH_SOCK" ] && export SSH_AUTH_SOCK="$GPG_SSH_SOCK"
+    unset GPG_SSH_SOCK
 elif [ -S "$HOME/.ssh/agent.sock" ]; then
     export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
 fi
 
 # Per-shell agent toggle (does not persist across new shells).
-use-touchid() { export SSH_AUTH_SOCK="$TOUCHID_AGENT_SOCKET"; echo "SSH_AUTH_SOCK -> touchid-agent"; }
-use-secretive() { export SSH_AUTH_SOCK="$SECRETIVE_SOCKET"; echo "SSH_AUTH_SOCK -> Secretive"; }
+use-touchid()   { export SSH_AUTH_SOCK="$TOUCHID_AGENT_SOCKET"; echo "SSH_AUTH_SOCK -> touchid-agent"; }
+use-secretive() { export SSH_AUTH_SOCK="$SECRETIVE_SOCKET";    echo "SSH_AUTH_SOCK -> Secretive"; }
 
 # Configure Ansible vault password script
 ANSIBLE_VAULT_PASSWORD_FILE="/Users/$USER/.scripts/ansible-vault-pass"
