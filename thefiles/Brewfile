@@ -1,0 +1,64 @@
+# Declarative package list. Install/refresh with:
+#     brew bundle --file=thefiles/Brewfile
+#
+# Idempotent: re-running only adds what's missing. Remove a line and
+# `brew bundle cleanup --file=thefiles/Brewfile` to prune.
+
+# ─── Custom taps ─────────────────────────────────────────────────────────────
+tap "ignaciojimenez/tap"
+
+# ─── Current toolset (preserved from `brew leaves` snapshot) ─────────────────
+brew "age"                   # modern file encryption (alternative to gpg)
+brew "ansible"
+brew "ansible-lint"
+brew "yamllint"
+brew "direnv"                # per-dir env vars (Cloudflare tokens, venv activation, etc.)
+brew "gh"
+brew "git-filter-repo"
+brew "go"
+brew "node"
+brew "openssh"               # newer than system openssh
+brew "pyenv-virtualenv"      # works alongside pyenv (kept; mise NOT introduced)
+brew "iperf3"
+brew "mtr"
+brew "nmap"
+brew "netaddr"
+brew "socat"
+brew "sshpass"
+brew "ykman"                 # YubiKey CLI
+
+# ─── macOS-specific (skipped automatically on Linux by brew bundle) ──────────
+brew "ignaciojimenez/tap/touchid-agent"
+
+# ─── Modern CLI baseline (additions; safe — all are actively maintained) ─────
+brew "ripgrep"               # `rg` — grep replacement
+brew "fd"                    # fast `find` replacement
+brew "bat"                   # cat with syntax highlighting
+brew "eza"                   # modern `ls` replacement
+brew "fzf"                   # fuzzy finder; powers Ctrl-R history search
+brew "zoxide"                # `z <fragment>` smart cd
+brew "starship"              # cross-shell prompt
+brew "jq"                    # JSON
+brew "yq"                    # YAML
+brew "shellcheck"            # static analysis for the bash files in this repo
+brew "tree"                  # directory listing (was a transitive dep; pin it)
+brew "coreutils"             # gtimeout, gdate, etc. — also was transitive
+
+# ─── Cloudflare / GitHub workflow (per global preferences) ───────────────────
+brew "cloudflare-wrangler"   # Workers/Pages CLI
+brew "cloudflared"           # tunnels
+
+# ─── GUI apps (casks) ────────────────────────────────────────────────────────
+cask "gpg-suite"
+cask "raspberry-pi-imager"
+cask "secretive"
+cask "sublime-text"
+cask "warp"
+
+# Modern additions worth considering — uncomment to install:
+# cask "iterm2"               # alternative to warp
+# cask "rectangle"            # window snapping
+# cask "raycast"              # spotlight replacement
+# cask "1password"
+# cask "1password-cli"
+# cask "visual-studio-code"
