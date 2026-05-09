@@ -11,4 +11,6 @@ source ~/.zsh_keys
 
 # Load interactive shell customizations
 source ~/.aliases $(detect_os)
-source /Users/choco/Documents/Workspaces/dotfiles/thefiles/.ansible_preauth
+
+# Ansible SSH preauth wrapper (sourced via the symlink set up by bootstrap.sh)
+[[ -f ~/.ansible_preauth ]] && source ~/.ansible_preauth

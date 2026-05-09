@@ -6,11 +6,7 @@ source ~/.profile
 # Load zsh-specific settings for non-interactive sessions here
 # Currently none needed
 
-##
-# Your previous /Users/choco/.zprofile file was backed up as /Users/choco/.zprofile.macports-saved_2025-11-08_at_00:13:39
-##
-
-# MacPorts Installer addition on 2025-11-08_at_00:13:39: adding an appropriate PATH variable for use with MacPorts.
-export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
-# Finished adapting your PATH environment variable for use with MacPorts.
+# MacPorts PATH (added by MacPorts installer 2025-11-08; kept manually).
+# Skip on non-macOS — MacPorts is macOS-only.
+[[ -d /opt/local/bin ]] && export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
 

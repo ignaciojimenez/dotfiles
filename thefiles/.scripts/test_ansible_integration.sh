@@ -56,10 +56,10 @@ pihole
 ansible_user=choco
 EOF
 
-# Sample ansible.cfg
-cat > ansible.cfg << 'EOF'
+# Sample ansible.cfg (unquoted heredoc so ${HOME} expands)
+cat > ansible.cfg << EOF
 [defaults]
-inventory = /Users/choco/Documents/Workspaces/raspberrypi-ansible/hosts
+inventory = ${HOME}/Documents/Workspaces/raspberrypi-ansible/hosts
 host_key_checking = false
 timeout = 5
 

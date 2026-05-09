@@ -1,5 +1,5 @@
 [user]
-	signingkey = /Users/choco/.ssh/touchid-agent-git.pub
+	signingkey = ~/.ssh/touchid-agent-git.pub
 	name = Ignacio Jimenez
 	email = i.jimenezpi@gmail.com
 [commit]
@@ -7,7 +7,7 @@
 [gpg]
 	format = ssh
 [gpg "ssh"]
-	allowedSignersFile = /Users/choco/.ssh/allowed_signers
+	allowedSignersFile = ~/.ssh/allowed_signers
 [http]
 	postBuffer = 524288000
 	version = HTTP/1.1

@@ -4,7 +4,7 @@ set -e  # Exit on error
 set -u  # Exit on undefined variable
 
 # Script constants
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly BACKUP_DIR="${HOME}/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
 # Color constants
@@ -124,7 +124,7 @@ get_shell_files() {
     esac
     
     # Common files for all shells
-    echo "$files .profile .shell_options .aliases .exports .common_functions .security .scripts"
+    echo "$files .profile .shell_options .aliases .exports .common_functions .security .scripts .gitconfig .ansible_preauth"
 }
 
 # Compare files or symlinks
