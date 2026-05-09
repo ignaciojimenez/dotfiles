@@ -45,7 +45,11 @@ brew "tree"                  # directory listing (was a transitive dep; pin it)
 brew "coreutils"             # gtimeout, gdate, etc. — also was transitive
 
 # ─── Cloudflare / GitHub workflow (per global preferences) ───────────────────
-brew "cloudflare-wrangler"   # Workers/Pages CLI
+# wrangler is intentionally NOT installed via brew: the canonical
+# distribution is the npm package (`npm i -g wrangler`), which is what
+# Cloudflare publishes and updates first. The Homebrew formula
+# (`cloudflare-wrangler`) conflicts with the npm symlink at
+# /usr/local/bin/wrangler if both are present.
 brew "cloudflared"           # tunnels
 
 # ─── GUI apps (casks) ────────────────────────────────────────────────────────
