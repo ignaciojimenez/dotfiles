@@ -16,3 +16,7 @@ source ~/.exports
 
 # Load common functions needed for non-interactive scripts
 source ~/.common_functions
+
+# Sentinel so .zshrc / .bashrc can detect that .profile already ran in a
+# login shell and avoid double-sourcing.
+export DOTFILES_PROFILE_LOADED=1

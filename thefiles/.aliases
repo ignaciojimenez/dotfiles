@@ -12,9 +12,18 @@ common(){
   alias gcs='git commit -S'
   alias glg='git log --stat'
 
-  # ls confs
-  alias ls='ls -Flh --color=auto'
-  export LSCOLORS='BxBxhxDxfxhxhxhxhxcxcx'
+  # ls confs — prefer eza if available; fall back to plain ls
+  if command -v eza >/dev/null; then
+    alias ls='eza -lh --group-directories-first'
+    alias ll='eza -lha --group-directories-first --git'
+    alias tree='eza --tree'
+  else
+    alias ls='ls -Flh --color=auto'
+    export LSCOLORS='BxBxhxDxfxhxhxhxhxcxcx'
+  fi
+
+  # cat → bat (paged off so it doesn't break scripts/heredocs that pipe in)
+  command -v bat >/dev/null && alias cat='bat --paging=never --style=plain'
 
   # Safety features
   set -o noclobber          # Prevent overwriting files with >

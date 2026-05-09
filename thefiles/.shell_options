@@ -14,4 +14,4 @@ export GLOBIGNORE=".:.."   # Ignore . and .. in pattern matching
 
 # Input/Output settings
 export IGNOREEOF=2        # Require CTRL+D twice to exit
-stty -ixon               # Disable flow control (CTRL+S, CTRL+Q)
+[[ -t 0 ]] && stty -ixon  # Disable flow control (CTRL+S, CTRL+Q) — only on interactive TTY
