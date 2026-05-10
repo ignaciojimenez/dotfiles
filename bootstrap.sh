@@ -88,7 +88,7 @@ require_zsh() {
 
 # All dotfiles symlinked into $HOME. No shell branching — zsh-only.
 get_dotfiles() {
-    echo ".zshrc .zprofile .zsh_options .zsh_keys .profile .shell_options .aliases .exports .common_functions .security .scripts .gitconfig .ansible_preauth"
+    echo ".zshrc .zprofile .zsh_options .zsh_keys .profile .shell_options .aliases .exports .common_functions .security .scripts .gitconfig .ansible_preauth .starship.toml"
 }
 
 # Compare files or symlinks

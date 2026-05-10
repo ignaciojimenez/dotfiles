@@ -1,0 +1,14 @@
+# Starship prompt config.
+#
+# Pulled in via STARSHIP_CONFIG=$HOME/.starship.toml (set in .exports)
+# rather than the default $XDG_CONFIG_HOME/starship.toml — keeps the
+# file at the top level so the existing bootstrap.sh symlink whitelist
+# can manage it without needing a $HOME/.config/ subpath.
+
+# Default scan_timeout is 30ms (per-module file scans) and
+# command_timeout is 500ms (per-module subprocess calls). On macOS the
+# Swift module shells out to /usr/bin/swift, which lazy-loads the
+# Xcode CLT and routinely takes 1s+. Just turn it off — we don't write
+# Swift here.
+[swift]
+disabled = true
