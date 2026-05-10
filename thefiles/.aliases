@@ -12,18 +12,22 @@ common(){
   alias gcs='git commit -S'
   alias glg='git log --stat'
 
-  # ls confs — prefer eza if available; fall back to plain ls
+  # ls confs — prefer eza if available; fall back to plain ls.
+  # Lean palette: file-type colors only, no icons, no per-file git
+  # status indicators (those add a lot of visual noise on busy dirs).
   if command -v eza >/dev/null; then
-    alias ls='eza -lh --group-directories-first'
-    alias ll='eza -lha --group-directories-first --git'
+    alias ls='eza --group-directories-first'
+    alias ll='eza -lh --group-directories-first'
+    alias la='eza -lha --group-directories-first'
     alias tree='eza --tree'
   else
     alias ls='ls -Flh --color=auto'
     export LSCOLORS='BxBxhxDxfxhxhxhxhxcxcx'
   fi
 
-  # cat → bat (paged off so it doesn't break scripts/heredocs that pipe in)
-  command -v bat >/dev/null && alias cat='bat --paging=never --style=plain'
+  # `cat` stays plain — no syntax-highlighting alias. Use `bat` explicitly
+  # when you want it for code files; everyday cat / pipes / config dumps
+  # are quieter without it.
 
   # Safety features
   set -o noclobber          # Prevent overwriting files with >

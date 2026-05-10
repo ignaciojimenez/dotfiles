@@ -1,14 +1,83 @@
-# Starship prompt config.
+# Starship prompt — subdued palette.
 #
 # Pulled in via STARSHIP_CONFIG=$HOME/.starship.toml (set in .exports)
 # rather than the default $XDG_CONFIG_HOME/starship.toml — keeps the
 # file at the top level so the existing bootstrap.sh symlink whitelist
 # can manage it without needing a $HOME/.config/ subpath.
+#
+# Design: cyan accent for path, bright-black (gray) for everything
+# else, prompt char carries the success/fail signal in green/red.
+# Language modules show version when relevant but don't compete with
+# the path.
 
-# Default scan_timeout is 30ms (per-module file scans) and
-# command_timeout is 500ms (per-module subprocess calls). On macOS the
-# Swift module shells out to /usr/bin/swift, which lazy-loads the
-# Xcode CLT and routinely takes 1s+. Just turn it off — we don't write
-# Swift here.
+format = """
+$directory\
+$git_branch$git_status$git_state\
+$python$nodejs$rust$golang$lua\
+$cmd_duration\
+$line_break\
+$character"""
+
+[character]
+success_symbol = "[❯](green)"
+error_symbol   = "[❯](red)"
+
+[directory]
+style = "cyan"
+truncation_length = 4
+truncate_to_repo = true
+
+# Git: branch + status without per-file noise, all in muted gray.
+[git_branch]
+format = " on [$branch]($style)"
+style  = "bright-black"
+symbol = ""
+
+[git_status]
+format = "[ \\[$all_status$ahead_behind\\]]($style)"
+style  = "bright-black"
+
+[git_state]
+format = " [\\($state( $progress_current/$progress_total)\\)]($style)"
+style  = "bright-black"
+
+[cmd_duration]
+format   = " [$duration]($style)"
+style    = "bright-black"
+min_time = 2_000          # only show when commands actually take a moment
+
+# Language modules — keep version info, mute the color, drop emoji icons.
+[python]
+format = " [py $version$virtualenv]($style)"
+style  = "bright-black"
+symbol = ""
+
+[nodejs]
+format = " [node $version]($style)"
+style  = "bright-black"
+symbol = ""
+
+[rust]
+format = " [rs $version]($style)"
+style  = "bright-black"
+symbol = ""
+
+[golang]
+format = " [go $version]($style)"
+style  = "bright-black"
+symbol = ""
+
+[lua]
+format = " [lua $version]($style)"
+style  = "bright-black"
+symbol = ""
+
+# Suppressed modules — irrelevant or notoriously slow.
 [swift]
+disabled = true        # /usr/bin/swift triggers Xcode CLT lazy-load and times out
+[c]
+disabled = true        # the C module fires on any *.c/*.h file in cwd; rarely useful
+[cmake]
 disabled = true
+[package]
+disabled = true        # noisy when in any node/ruby/cargo project
