@@ -46,10 +46,9 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 ├── scripts/validate.sh      sandboxed harness — bash/zsh syntax + shellcheck +
 │                            sandboxed shell load + bootstrap dry-run + Brewfile parse
 ├── .github/workflows/       CI: shellcheck + bash/zsh -n + brew bundle + bootstrap dry-run
+├── AGENTS.md                conventions / non-obvious bits for AI coding agents
 └── docs/
-    ├── decisions.md         one-liner architecture decisions log
-    ├── improvement-plan.md  2026-05 overhaul (history)
-    └── TODO.md              open polish items
+    └── decisions.md         architectural-call log (newest first; includes known to-dos)
 ```
 
 ## Linux
@@ -67,6 +66,5 @@ modern CLI baseline activates as soon as you `apt`/`dnf` the tools you want.
 
 ## Documentation
 
-- [`docs/decisions.md`](docs/decisions.md) — architectural calls
-- [`docs/improvement-plan.md`](docs/improvement-plan.md) — 2026-05 overhaul history
-- [`docs/TODO.md`](docs/TODO.md) — open polish items
+- [`docs/decisions.md`](docs/decisions.md) — architectural calls + known to-dos
+- [`AGENTS.md`](AGENTS.md) — non-obvious bits for AI coding agents
