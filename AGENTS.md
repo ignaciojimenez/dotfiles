@@ -62,8 +62,10 @@ brew bundle --file=thefiles/Brewfile   # install/refresh packages
 
 ## Conventions
 
-- All commits signed (`-S`) via touchid-agent's no-touch git key. If
-  the agent is unreachable: `--no-gpg-sign` is the documented
-  fallback, not a workaround to skip silently.
+- Signing is opt-in attestation, not a default. `commit.gpgSign=false`
+  globally; the signing key is touch-required (`touchid-agent-sign`),
+  so each `-S` is one TouchID prompt that means "human present, human
+  approved." Sign deliberately at meaningful moments — merges to main
+  (`git ms`), release tags (`git ts`) — not on every WIP commit.
 - `docs/decisions.md` is the architectural-call log — add entries
   newest-first when making non-obvious choices.

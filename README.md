@@ -23,8 +23,8 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
   emacs keybindings, modern CLI baseline (Starship, fzf, zoxide, direnv, eza, bat) —
   every tool init guarded with `command -v`, so missing tools degrade silently.
 - **Security posture** (`thefiles/.security`) — touchid-agent → Secretive → gpg-agent
-  agent priority, Keychain-backed Ansible vault password, signed commits via SSH-format
-  Secure-Enclave key.
+  agent priority, Keychain-backed Ansible vault password, opt-in commit signing via a
+  touch-required Secure-Enclave key (signature = human attestation, not noise).
 - **Ansible SSH preauth** (`thefiles/.ansible_preauth`) — sequential ControlMaster warmup
   before ansible runs, so parallel forks multiplex through warm sessions instead of
   triggering concurrent TouchID prompts. Delegates host enumeration to

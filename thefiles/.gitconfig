@@ -1,13 +1,20 @@
 [user]
-	signingkey = ~/.ssh/touchid-agent-git.pub
+	signingkey = ~/.ssh/touchid-agent-sign.pub
 	name = Ignacio Jimenez
 	email = i.jimenezpi@gmail.com
 [commit]
-	gpgSign = true
+	# Signing is opt-in (key is touch-required). Use `git cs` / `git ms`
+	# / `git ts` at meaningful moments — see docs/decisions.md.
+	gpgSign = false
 [gpg]
 	format = ssh
 [gpg "ssh"]
 	allowedSignersFile = ~/.ssh/allowed_signers
+[alias]
+	cs  = commit -S
+	cas = commit --amend --no-edit -S
+	ts  = tag -s
+	ms  = merge --no-ff -S
 [http]
 	postBuffer = 524288000
 	version = HTTP/1.1

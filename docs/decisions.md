@@ -2,6 +2,10 @@
 
 One-liner record of architecture/strategy calls. Newest first.
 
+## 2026-05-10
+
+- **Commit signing is opt-in attestation, not a default.** `commit.gpgSign=false` globally; signing key is a separate touch-required Secure-Enclave key (`touchid-agent-sign`). Rationale: a signature on every WIP commit produced by an unattended no-touch key proves only "key X is loaded on this machine" — the same guarantee SSH auth gives. The thing that makes a signature meaningful (vs. just a fancy auth token) is human presence; auto-signing discards exactly that property. Aliases (`git cs` / `git ms` / `git ts`) make deliberate signing one-keystroke. Supersedes the "no-touch git-signing key for unattended commits" half of the 2026-05-09 touchid-agent decision; SSH-auth-via-touchid-agent stands.
+
 ## 2026-05-09
 
 - **zsh-only.** Bash dropped. Shell-selection multiplexing was speculative and never exercised; collapsing to one shell removes ~40% of branching code.
