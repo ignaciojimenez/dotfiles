@@ -31,6 +31,11 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
   `ansible --list-hosts`.
 - **Declarative package install** (`thefiles/Brewfile`) — `brew bundle` over scripted
   `brew install`. Idempotent.
+- **Portable AI agent context** (macOS only) — `bootstrap.sh` links `~/.agent-context`
+  to the iCloud Drive `AgentContext/` vault and points `~/.claude/CLAUDE.md` at the
+  tracked one-line wiring file (`.claude/CLAUDE.md`) that imports the vault's
+  `AGENTS.md`. The context itself lives in iCloud (synced, out of this public repo);
+  the repo owns only the wiring.
 
 ## Layout
 
@@ -38,6 +43,7 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 .
 ├── bootstrap.sh             symlink dotfiles into $HOME (idempotent, --dry-run, --force)
 ├── env_bootstrap.sh         OS-specific provisioning sourced by bootstrap.sh -k
+├── .claude/CLAUDE.md        one-line wiring: imports the iCloud AGENTS.md (macOS only)
 ├── thefiles/                everything that gets symlinked
 │   ├── Brewfile             declarative brew bundle
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper

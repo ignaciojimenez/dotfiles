@@ -38,6 +38,14 @@ get symlinked into `$HOME`. **A new dotfile in `thefiles/` will not
 be linked unless it's added there.** Notably: `.gitconfig`,
 `.ansible_preauth`, `.starship.toml` are all in the whitelist.
 
+Two macOS-only symlinks are handled *outside* `get_dotfiles`, in
+dedicated guarded blocks at the end of `create_symlinks` (they aren't
+flat dotfiles in `thefiles/`): `~/Workspaces -> ~/Documents/Workspaces`,
+and the AI-context wiring — `~/.agent-context -> ` the iCloud
+`AgentContext/` vault plus `~/.claude/CLAUDE.md -> .claude/CLAUDE.md`
+(the tracked one-line file that imports the vault's `AGENTS.md`). The
+`AGENTS.md` content itself is **not** in this repo — iCloud owns it.
+
 ### Linux fallback
 
 `bootstrap.sh` symlinks the same dotfiles on Linux but
