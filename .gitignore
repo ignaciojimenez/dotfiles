@@ -21,3 +21,7 @@
 
 # Local-only overrides
 *.local
+
+# Claude Code local settings (machine-specific perms; never commit).
+# The tracked .claude/CLAUDE.md wiring file is kept; this stays out.
+.claude/settings.local.json

@@ -193,7 +193,71 @@ create_symlinks() {
             info "[DRY-RUN] Would create symlink: $HOME/Workspaces -> $HOME/Documents/Workspaces"
         fi
     fi
-    
+
+    # macOS-specific: portable AI agent context. The single source of truth
+    # (AGENTS.md) lives in the iCloud Drive vault and is NOT tracked here —
+    # this repo owns only the wiring. iCloud has no Linux client, so this is
+    # a no-op off macOS.
+    #   a. ~/.agent-context -> iCloud AgentContext vault.
+    #   b. ~/.claude/CLAUDE.md -> the tracked one-line file that imports
+    #      the vault's AGENTS.md.
+    if [[ "$os_type" == "macos" ]]; then
+        local icloud_ctx="$HOME/Library/Mobile Documents/com~apple~CloudDocs/AgentContext"
+        local agent_link="$HOME/.agent-context"
+
+        # a. -sfn = force + no-dereference: re-points idempotently and never
+        #    follows an existing symlinked dir to nest inside it.
+        if [[ "$(readlink "$agent_link" 2>/dev/null)" == "$icloud_ctx" ]]; then
+            [[ "$VERBOSE" -eq 1 ]] && info "Skipping $agent_link (already linked)"
+        elif [[ "$DRY_RUN" -eq 0 ]]; then
+            ln -sfn "$icloud_ctx" "$agent_link"
+            info "Created symlink: $agent_link -> $icloud_ctx"
+            ((changes_made++))
+        else
+            info "[DRY-RUN] Would create symlink: $agent_link -> $icloud_ctx"
+        fi
+
+        # b. ~/.claude/CLAUDE.md — reuse the same files_differ + backup + FORCE
+        #    gate as the main loop so an existing plain file is preserved.
+        local claude_src="${SCRIPT_DIR}/.claude/CLAUDE.md"
+        local claude_dst="$HOME/.claude/CLAUDE.md"
+        if files_differ "$claude_src" "$claude_dst"; then
+            local claude_proceed=1
+            if [[ -e "$claude_dst" ]]; then
+                if [[ "$FORCE" -eq 0 ]]; then
+                    if [[ -L "$claude_dst" ]]; then
+                        warn "Different symlink exists: $claude_dst -> $(readlink "$claude_dst")"
+                    else
+                        warn "File exists and differs: $claude_dst"
+                    fi
+                    warn "Use --force to overwrite"
+                    claude_proceed=0
+                elif [[ "$DRY_RUN" -eq 0 ]]; then
+                    if [[ "$backups_made" -eq 0 ]]; then
+                        create_backup
+                    fi
+                    mv "$claude_dst" "${BACKUP_DIR}/"
+                    info "Backed up: $claude_dst"
+                    ((backups_made++))
+                else
+                    info "[DRY-RUN] Would back up: $claude_dst"
+                fi
+            fi
+            if [[ "$claude_proceed" -eq 1 ]]; then
+                if [[ "$DRY_RUN" -eq 0 ]]; then
+                    mkdir -p "$HOME/.claude"
+                    ln -sf "$claude_src" "$claude_dst"
+                    info "Created symlink: $claude_dst -> $claude_src"
+                    ((changes_made++))
+                else
+                    info "[DRY-RUN] Would create symlink: $claude_dst -> $claude_src"
+                fi
+            fi
+        else
+            [[ "$VERBOSE" -eq 1 ]] && info "Skipping $claude_dst (already correctly linked)"
+        fi
+    fi
+
     # Summary
     if [[ "$changes_made" -eq 0 ]]; then
         info "No changes needed, all files are up to date"
