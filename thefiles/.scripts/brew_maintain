@@ -21,7 +21,7 @@ fi
 
 # Save current package list
 echo -e "${GREEN}=> Saving current package list...${NC}"
-brew bundle dump --force --describe
+brew bundle dump --force
 
 echo -e "${GREEN}=> Updating Homebrew...${NC}"
 brew update
