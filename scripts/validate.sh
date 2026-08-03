@@ -44,6 +44,7 @@ BASH_FILES=(
   thefiles/.profile
   thefiles/.security
   thefiles/.shell_options
+  thefiles/.shell_tools
   thefiles/.scripts/brew_maintain
   thefiles/.scripts/ansible-vault-pass
 )

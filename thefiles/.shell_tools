@@ -1,0 +1,44 @@
+#!/bin/sh
+# Interactive tool initialisation, shared between zsh and bash.
+#
+# Sourced with the shell name as $1, mirroring `.aliases $(detect_os)`:
+#     source ~/.shell_tools zsh
+#
+# These tools all emit shell-specific init code, but the code differs only by
+# which shell you ask for — so the block is identical apart from one word.
+# Keeping it here means adding a tool is a one-line change in one file rather
+# than the same line in every shell's rc.
+#
+# Every block is guarded on the tool being present, so a host that hasn't run
+# `brew bundle` (or a fresh Linux box) still loads cleanly. POSIX syntax
+# throughout: this file is read by both zsh and bash.
+
+_st_shell="${1:-bash}"
+
+# Prompt
+command -v starship >/dev/null 2>&1 && eval "$(starship init "$_st_shell")"
+
+# Smart cd: `z <fragment>` jumps to frecent directories
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init "$_st_shell")"
+
+# Per-directory env vars (Cloudflare tokens, venv activation, etc.)
+command -v direnv >/dev/null 2>&1 && eval "$(direnv hook "$_st_shell")"
+
+# Fuzzy finder — keybindings + completion. Unlike the above, fzf ships static
+# per-shell scripts whose location varies by platform: Homebrew puts them under
+# its prefix, Debian under /usr/share/doc/fzf/examples. Take the first match.
+if command -v fzf >/dev/null 2>&1; then
+    _st_brew=""
+    command -v brew >/dev/null 2>&1 && _st_brew="$(brew --prefix 2>/dev/null)/opt/fzf/shell"
+    for _st_dir in "$_st_brew" /usr/share/fzf/shell /usr/share/fzf /usr/share/doc/fzf/examples; do
+        [ -n "$_st_dir" ] || continue
+        if [ -f "$_st_dir/key-bindings.$_st_shell" ]; then
+            . "$_st_dir/key-bindings.$_st_shell"
+            [ -f "$_st_dir/completion.$_st_shell" ] && . "$_st_dir/completion.$_st_shell"
+            break
+        fi
+    done
+    unset _st_brew _st_dir
+fi
+
+unset _st_shell

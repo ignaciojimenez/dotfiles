@@ -42,6 +42,15 @@ One-liner record of architecture/strategy calls. Newest first.
   source of truth that moves seamlessly across devices *and* interfaces. Nearest thing today
   is reading the file from GitHub; that isn't a real answer yet.
 
+- **`.exports:11` runs `tput` unguarded** — `export LESS_TERMCAP_md="$(tput bold; tput setaf 3)"`. With no
+  `$TERM` it writes `tput: No value for $TERM and no -T specified` to stderr, twice, on every login shell.
+  Invisible on macOS interactive (TERM is always set) but reproduced on Debian 13 / bash 5.2, where
+  `.profile` is sourced by non-interactive logins too — `ssh host 'cmd'`, cron, agent runs. Stderr noise on
+  every invocation is a plausible false-alarm source for monitoring that greps stderr. Fix is a guard:
+  `[ -n "$TERM" ] && [ "$TERM" != dumb ] && command -v tput >/dev/null`. Note the interaction with the
+  `export TERM=xterm-256color` to-do below: that line is currently what masks this under zsh, so removing
+  it surfaces this on macOS too. Fix the `tput` guard first.
+
 Cosmetic/stylistic. None blocking, none insecure.
 
 - `setopt CORRECT` / `CORRECT_ALL` in `.zsh_options` — drop unless you actually use the "did you mean…" prompt.
