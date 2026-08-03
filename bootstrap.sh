@@ -78,11 +78,20 @@ parse_args() {
 
 # Require zsh. We support zsh on macOS as primary and zsh on Linux as
 # secondary; bash was dropped from the dotfiles in 2026-05.
-require_zsh() {
+# zsh is what the shell config targets, but it is not a prerequisite for
+# linking. Only four tracked files need it — .zshrc, .zprofile, .zsh_options,
+# .zsh_keys — and without zsh they are inert, not broken. The other ten work
+# under any shell or none: .profile (POSIX, read by login bash), .exports,
+# .common_functions, .gitconfig, .starship.toml, .scripts/, and the agent
+# context. Hard-failing denied all of that over four dormant files, on exactly
+# the hosts least able to fix it — a container or a shared box where installing
+# a shell needs root you may not have. Link everything, say so once; the zsh
+# files start working the moment zsh appears, with no re-run needed.
+warn_missing_zsh() {
     if ! command -v zsh >/dev/null 2>&1; then
-        error "zsh is required but not installed."
-        error "Install it first:  apt install zsh   |   dnf install zsh   |   brew install zsh"
-        exit 1
+        warn "zsh not installed — .zshrc/.zprofile/.zsh_options/.zsh_keys will be"
+        warn "inert until it is. Everything else links and works normally."
+        warn "To enable them:  apt install zsh  |  dnf install zsh  |  brew install zsh"
     fi
 }
 
@@ -301,7 +310,7 @@ main() {
     fi
     info "Detected OS: $os_type"
 
-    require_zsh
+    warn_missing_zsh
 
     create_symlinks "$os_type"
     

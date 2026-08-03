@@ -72,6 +72,13 @@ Linux is a real-but-secondary target — ssh into a server, want personal config
 *not* install packages (distros vary, you usually want minimum footprint). The
 modern CLI baseline activates as soon as you `apt`/`dnf` the tools you want.
 
+**zsh is not a prerequisite.** Only four files need it (`.zshrc`, `.zprofile`,
+`.zsh_options`, `.zsh_keys`) and without it they are inert, not broken. Everything
+else links and works: `.profile` is POSIX and is read by login bash, `.gitconfig`
+by git, `.scripts/` and the agent context by anything. So a container or a shared
+box where you have no root still gets most of the value, and the zsh files start
+working the moment zsh appears — no re-run needed.
+
 ## Validation
 
 ```bash
