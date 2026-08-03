@@ -31,11 +31,18 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
   `ansible --list-hosts`.
 - **Declarative package install** (`thefiles/Brewfile`) — `brew bundle` over scripted
   `brew install`. Idempotent.
-- **Portable AI agent context** (macOS only) — `bootstrap.sh` links `~/.agent-context`
-  to the iCloud Drive `AgentContext/` vault and points `~/.claude/CLAUDE.md` at the
-  tracked one-line wiring file (`.claude/CLAUDE.md`) that imports the vault's
-  `AGENTS.md`. The context itself lives in iCloud (synced, out of this public repo);
-  the repo owns only the wiring.
+- **Portable AI agent context** (all platforms) — `agent-context/AGENTS.md` is one
+  canonical personal-context file, symlinked into every agent harness's global
+  config path by `bootstrap.sh`. Budgeted at 6,000 characters so it fits the
+  strictest harness verbatim; `scripts/validate.sh` fails if it grows past that.
+  See [`AGENTS.md`](AGENTS.md) for the adapter table and what's actually verified.
+
+  Gemini CLI needs one manual step, since `~/.gemini/GEMINI.md` is left alone for
+  Antigravity to own — add to `~/.gemini/settings.json`:
+
+  ```json
+  { "context": { "fileName": ["AGENTS.md", "GEMINI.md"] } }
+  ```
 
 ## Layout
 
@@ -43,7 +50,8 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 .
 ├── bootstrap.sh             symlink dotfiles into $HOME (idempotent, --dry-run, --force)
 ├── env_bootstrap.sh         OS-specific provisioning sourced by bootstrap.sh -k
-├── .claude/CLAUDE.md        one-line wiring: imports the iCloud AGENTS.md (macOS only)
+├── agent-context/AGENTS.md  canonical personal context for all agent harnesses
+├── .claude/CLAUDE.md        Claude Code importer: @-imports the canonical context
 ├── thefiles/                everything that gets symlinked
 │   ├── Brewfile             declarative brew bundle
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper

@@ -125,6 +125,48 @@ create_backup() {
     fi
 }
 
+# Link one path with the same backup + FORCE gate as the main loop.
+# Creates the parent directory, so it works for nested harness config paths.
+# Reads/updates the create_symlinks counters via bash dynamic scoping.
+link_with_backup() {
+    local src="$1"
+    local dst="$2"
+
+    if ! files_differ "$src" "$dst"; then
+        [[ "$VERBOSE" -eq 1 ]] && info "Skipping $dst (already correctly linked)"
+        return 0
+    fi
+
+    if [[ -e "$dst" || -L "$dst" ]]; then
+        if [[ "$FORCE" -eq 0 ]]; then
+            if [[ -L "$dst" ]]; then
+                warn "Different symlink exists: $dst -> $(readlink "$dst")"
+            else
+                warn "File exists and differs: $dst"
+            fi
+            warn "Use --force to overwrite"
+            return 0
+        elif [[ "$DRY_RUN" -eq 0 ]]; then
+            [[ "$backups_made" -eq 0 ]] && create_backup
+            # Flatten the path so nested configs can't collide in the backup dir.
+            mv "$dst" "${BACKUP_DIR}/$(echo "${dst#"$HOME"/}" | tr '/' '_')"
+            info "Backed up: $dst"
+            ((backups_made++))
+        else
+            info "[DRY-RUN] Would back up: $dst"
+        fi
+    fi
+
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        mkdir -p "$(dirname "$dst")"
+        ln -sfn "$src" "$dst"
+        info "Created symlink: $dst -> $src"
+        ((changes_made++))
+    else
+        info "[DRY-RUN] Would create symlink: $dst -> $src"
+    fi
+}
+
 # Create symlinks with smart backup
 create_symlinks() {
     local os_type="$1"
@@ -194,69 +236,40 @@ create_symlinks() {
         fi
     fi
 
-    # macOS-specific: portable AI agent context. The single source of truth
-    # (AGENTS.md) lives in the iCloud Drive vault and is NOT tracked here —
-    # this repo owns only the wiring. iCloud has no Linux client, so this is
-    # a no-op off macOS.
-    #   a. ~/.agent-context -> iCloud AgentContext vault.
-    #   b. ~/.claude/CLAUDE.md -> the tracked one-line file that imports
-    #      the vault's AGENTS.md.
-    if [[ "$os_type" == "macos" ]]; then
-        local icloud_ctx="$HOME/Library/Mobile Documents/com~apple~CloudDocs/AgentContext"
-        local agent_link="$HOME/.agent-context"
+    # Portable AI agent context. The canonical file is agent-context/AGENTS.md
+    # in this repo — git is the only transport that reaches macOS, Linux agent
+    # hosts and anything else, so this runs on every platform.
+    #
+    #   a. ~/.agent-context -> the repo's agent-context/ directory. Everything
+    #      else points through this, which is what keeps the wiring free of
+    #      hardcoded usernames and clone locations.
+    #   b. One adapter per harness, at each vendor's own global-config path.
+    #      Created unconditionally: a dangling adapter for a harness that isn't
+    #      installed is inert, and pre-wiring means adopting a new harness
+    #      costs nothing.
+    local agent_link="$HOME/.agent-context"
+    link_with_backup "${SCRIPT_DIR}/agent-context" "$agent_link"
 
-        # a. -sfn = force + no-dereference: re-points idempotently and never
-        #    follows an existing symlinked dir to nest inside it.
-        if [[ "$(readlink "$agent_link" 2>/dev/null)" == "$icloud_ctx" ]]; then
-            [[ "$VERBOSE" -eq 1 ]] && info "Skipping $agent_link (already linked)"
-        elif [[ "$DRY_RUN" -eq 0 ]]; then
-            ln -sfn "$icloud_ctx" "$agent_link"
-            info "Created symlink: $agent_link -> $icloud_ctx"
-            ((changes_made++))
-        else
-            info "[DRY-RUN] Would create symlink: $agent_link -> $icloud_ctx"
-        fi
+    local canonical="${SCRIPT_DIR}/agent-context/AGENTS.md"
 
-        # b. ~/.claude/CLAUDE.md — reuse the same files_differ + backup + FORCE
-        #    gate as the main loop so an existing plain file is preserved.
-        local claude_src="${SCRIPT_DIR}/.claude/CLAUDE.md"
-        local claude_dst="$HOME/.claude/CLAUDE.md"
-        if files_differ "$claude_src" "$claude_dst"; then
-            local claude_proceed=1
-            if [[ -e "$claude_dst" ]]; then
-                if [[ "$FORCE" -eq 0 ]]; then
-                    if [[ -L "$claude_dst" ]]; then
-                        warn "Different symlink exists: $claude_dst -> $(readlink "$claude_dst")"
-                    else
-                        warn "File exists and differs: $claude_dst"
-                    fi
-                    warn "Use --force to overwrite"
-                    claude_proceed=0
-                elif [[ "$DRY_RUN" -eq 0 ]]; then
-                    if [[ "$backups_made" -eq 0 ]]; then
-                        create_backup
-                    fi
-                    mv "$claude_dst" "${BACKUP_DIR}/"
-                    info "Backed up: $claude_dst"
-                    ((backups_made++))
-                else
-                    info "[DRY-RUN] Would back up: $claude_dst"
-                fi
-            fi
-            if [[ "$claude_proceed" -eq 1 ]]; then
-                if [[ "$DRY_RUN" -eq 0 ]]; then
-                    mkdir -p "$HOME/.claude"
-                    ln -sf "$claude_src" "$claude_dst"
-                    info "Created symlink: $claude_dst -> $claude_src"
-                    ((changes_made++))
-                else
-                    info "[DRY-RUN] Would create symlink: $claude_dst -> $claude_src"
-                fi
-            fi
-        else
-            [[ "$VERBOSE" -eq 1 ]] && info "Skipping $claude_dst (already correctly linked)"
-        fi
-    fi
+    # Claude Code reads CLAUDE.md, not AGENTS.md, so it gets the tracked
+    # importer file (which adds Claude-only config below the @ import).
+    link_with_backup "${SCRIPT_DIR}/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+
+    # Harnesses that read AGENTS.md natively at a global path.
+    link_with_backup "$canonical" "$HOME/.config/opencode/AGENTS.md"
+    link_with_backup "$canonical" "$HOME/.config/devin/AGENTS.md"
+    link_with_backup "$canonical" "$HOME/.gemini/AGENTS.md"
+
+    # Devin Desktop (Windsurf IDE) has its own filename and a 6,000-char cap
+    # on this file — scripts/validate.sh enforces that budget on the canonical.
+    link_with_backup "$canonical" "$HOME/.codeium/windsurf/memories/global_rules.md"
+
+    # Deliberately NOT linked: ~/.gemini/GEMINI.md. Antigravity and Gemini CLI
+    # both read *and write* it (google-gemini/gemini-cli#16058), so a symlink
+    # would let Antigravity's "+ Global" button overwrite the tracked file.
+    # Gemini CLI is pointed at the AGENTS.md adapter above instead, via
+    # `context.fileName` in ~/.gemini/settings.json — see README.
 
     # Summary
     if [[ "$changes_made" -eq 0 ]]; then
