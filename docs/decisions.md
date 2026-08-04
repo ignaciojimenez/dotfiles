@@ -37,7 +37,11 @@ One-liner record of architecture/strategy calls. Newest first.
   running agents on Linux hosts. The context wiring is now cross-platform, but
   `env_bootstrap.sh unix()` is still a deliberate no-op, so a fresh Linux agent host gets
   symlinks and no tooling. Decide whether that stays true now that Linux is somewhere real
-  work happens rather than just somewhere to ssh into.
+  work happens rather than just somewhere to ssh into. Three concrete data points, all found
+  only once Linux became a real target: the `require_zsh` hard gate, the absence of any
+  `.bashrc`, and the unguarded `tput` in `.exports`. Related open question that belongs in
+  `infrastructure-automation`, not here: whether `apt install zsh` plus the dotfiles clone
+  get codified into the agent-lxc Ansible role, or stay a manual step.
 - **Context portability beyond the filesystem.** Symlinks solve "same context on every host I
   can clone to". They don't reach phones, web UIs, or hosted agents. Open problem: one
   source of truth that moves seamlessly across devices *and* interfaces. Nearest thing today

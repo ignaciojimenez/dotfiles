@@ -56,6 +56,9 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 │   ├── Brewfile             declarative brew bundle
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper
 │   ├── .security            SSH agent + ansible vault config
+│   ├── .shell_options       shell-agnostic options, sourced by .zsh_options
+│   ├── .shell_tools         starship/zoxide/direnv/fzf init, shared across shells
+│                            (sourced with the shell name: `.shell_tools zsh`)
 │   └── .scripts/            user-bin scripts (brew_maintain, ansible-vault-pass)
 ├── scripts/validate.sh      sandboxed harness — bash/zsh syntax + shellcheck +
 │                            sandboxed shell load + bootstrap dry-run + Brewfile parse
@@ -79,10 +82,22 @@ by git, `.scripts/` and the agent context by anything. So a container or a share
 box where you have no root still gets most of the value, and the zsh files start
 working the moment zsh appears — no re-run needed.
 
+### Setting up a remote or agent host
+
+```bash
+ssh <host> "git clone https://github.com/ignaciojimenez/dotfiles ~/dotfiles"
+ssh <host> "~/dotfiles/bootstrap.sh --dry-run"   # inspect, then re-run without --dry-run
+ssh <host> "sudo apt install -y zsh"             # optional: only for interactive shell use
+```
+
+Refreshing later is `cd ~/dotfiles && git pull && ./bootstrap.sh` — manual by design,
+so a remote host never changes underneath you. `bootstrap.sh` is fully `SCRIPT_DIR`
+relative, so the clone can live anywhere and the running user's name doesn't matter.
+
 ## Validation
 
 ```bash
-./scripts/validate.sh        # 21 checks, zero side effects on your environment
+./scripts/validate.sh        # 22 checks, zero side effects on your environment
 ```
 
 ## Documentation
