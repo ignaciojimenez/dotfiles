@@ -4,6 +4,7 @@ One-liner record of architecture/strategy calls. Newest first.
 
 ## 2026-08-04
 
+- **`$TERM` belongs to the terminal; we neither force it nor assume it.** Two halves of one bug, fixed together. `.zsh_keys` exported `TERM=xterm-256color`, clobbering whatever the terminal actually advertised — a downgrade under tmux (`tmux-256color`) or kitty, and wrong in principle since the terminal is the authority. Deleted rather than moved to `.exports`: `.exports` is reached via `.profile` by *non-interactive* logins, so moving it would have forced `TERM` into cron and `ssh host 'cmd'` contexts where it should stay unset — worse than the original. Removing it then exposed the half it had been masking: `.exports` ran `tput` unguarded, writing to stderr on every login shell with no `$TERM`. Invisible on macOS, but `.profile` is sourced by non-interactive logins on every Linux host, making it a plausible false-alarm source for monitoring that greps stderr. Now guarded on `$TERM` being set and not `dumb`. Verified on Debian 13 / bash 5.2 (stderr clean with TERM unset and with `TERM=dumb`; `LESS_TERMCAP_md` still populated when TERM is real) and on macOS zsh (`tmux-256color` now survives intact).
 - **zsh is a target, not a prerequisite. `bootstrap.sh` warns instead of aborting.** It used to `exit 1` when zsh was missing, which denied *everything* — `.profile`, `.gitconfig`, `.scripts/`, the agent context — over the four files that actually need zsh, and denied it precisely on the hosts least able to fix it: a container or a shared box where installing a shell needs root you may not have. Verified the split before changing it: 4 of 14 tracked files are zsh-specific and are inert (not broken) without it, while `.profile` is POSIX and confirmed read by login bash, and `.gitconfig` is confirmed picked up by git. Linking unconditionally also means the zsh files start working the moment zsh is installed, with no second run. Does **not** revisit the 2026-05-09 zsh-only call: the shell config stays zsh-only: this is about the gate, not the target.
 - **Portable AI agent context lives in this repo; git is the transport. Supersedes the 2026-06-13 iCloud call.** The canonical file is `agent-context/AGENTS.md`, tracked and public. The iCloud vault is dropped entirely. Reason the previous decision failed: `bootstrap.sh` gated the whole wiring on macOS because iCloud has no Linux client, so a Linux agent host — the case that motivated this — could never receive the context at all. Git reaches every platform; iCloud reaches one. Secondary wins: real history, diffs and rollback on the content that actually matters, and no `/Users/<name>/` hardcode.
 - **One canonical file, budgeted at 6,000 characters.** That is Devin Desktop's (Windsurf's) cap on `global_rules.md`; staying under it means every harness gets the identical file verbatim, with no per-harness variants to drift. `scripts/validate.sh` fails the build if it grows past the budget, because over-budget content would be silently truncated in Windsurf while looking correct everywhere else. It also converges with Claude Code's own guidance that shorter context files get better adherence.
@@ -42,19 +43,9 @@ One-liner record of architecture/strategy calls. Newest first.
   source of truth that moves seamlessly across devices *and* interfaces. Nearest thing today
   is reading the file from GitHub; that isn't a real answer yet.
 
-- **`.exports:11` runs `tput` unguarded** — `export LESS_TERMCAP_md="$(tput bold; tput setaf 3)"`. With no
-  `$TERM` it writes `tput: No value for $TERM and no -T specified` to stderr, twice, on every login shell.
-  Invisible on macOS interactive (TERM is always set) but reproduced on Debian 13 / bash 5.2, where
-  `.profile` is sourced by non-interactive logins too — `ssh host 'cmd'`, cron, agent runs. Stderr noise on
-  every invocation is a plausible false-alarm source for monitoring that greps stderr. Fix is a guard:
-  `[ -n "$TERM" ] && [ "$TERM" != dumb ] && command -v tput >/dev/null`. Note the interaction with the
-  `export TERM=xterm-256color` to-do below: that line is currently what masks this under zsh, so removing
-  it surfaces this on macOS too. Fix the `tput` guard first.
-
 Cosmetic/stylistic. None blocking, none insecure.
 
 - `setopt CORRECT` / `CORRECT_ALL` in `.zsh_options` — drop unless you actually use the "did you mean…" prompt.
-- `export TERM=xterm-256color` in `.zsh_keys` — wrong file (it's an env var) and overrides what the terminal advertises. Move to `.exports` or delete.
 - Custom `python()` in `.aliases` macos block — overrides pyenv shims to fall back to `/usr/bin/python3`. Decide which one is authoritative and drop the other.
 - `lwp-request`-based `GET`/`POST`/… aliases in `.aliases` — replace with `httpie` or just remove.
 - `EDITOR='vim'` set in `.profile` but no `.vimrc` tracked. Commit one or switch editor.
