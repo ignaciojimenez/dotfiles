@@ -31,11 +31,18 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
   `ansible --list-hosts`.
 - **Declarative package install** (`thefiles/Brewfile`) — `brew bundle` over scripted
   `brew install`. Idempotent.
-- **Portable AI agent context** (macOS only) — `bootstrap.sh` links `~/.agent-context`
-  to the iCloud Drive `AgentContext/` vault and points `~/.claude/CLAUDE.md` at the
-  tracked one-line wiring file (`.claude/CLAUDE.md`) that imports the vault's
-  `AGENTS.md`. The context itself lives in iCloud (synced, out of this public repo);
-  the repo owns only the wiring.
+- **Portable AI agent context** (all platforms) — `agent-context/AGENTS.md` is one
+  canonical personal-context file, symlinked into every agent harness's global
+  config path by `bootstrap.sh`. Budgeted at 6,000 characters so it fits the
+  strictest harness verbatim; `scripts/validate.sh` fails if it grows past that.
+  See [`AGENTS.md`](AGENTS.md) for the adapter table and what's actually verified.
+
+  Gemini CLI needs one manual step, since `~/.gemini/GEMINI.md` is left alone for
+  Antigravity to own — add to `~/.gemini/settings.json`:
+
+  ```json
+  { "context": { "fileName": ["AGENTS.md", "GEMINI.md"] } }
+  ```
 
 ## Layout
 
@@ -43,11 +50,15 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 .
 ├── bootstrap.sh             symlink dotfiles into $HOME (idempotent, --dry-run, --force)
 ├── env_bootstrap.sh         OS-specific provisioning sourced by bootstrap.sh -k
-├── .claude/CLAUDE.md        one-line wiring: imports the iCloud AGENTS.md (macOS only)
+├── agent-context/AGENTS.md  canonical personal context for all agent harnesses
+├── .claude/CLAUDE.md        Claude Code importer: @-imports the canonical context
 ├── thefiles/                everything that gets symlinked
 │   ├── Brewfile             declarative brew bundle
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper
 │   ├── .security            SSH agent + ansible vault config
+│   ├── .shell_options       shell-agnostic options, sourced by .zsh_options
+│   ├── .shell_tools         starship/zoxide/direnv/fzf init, shared across shells
+│                            (sourced with the shell name: `.shell_tools zsh`)
 │   └── .scripts/            user-bin scripts (brew_maintain, ansible-vault-pass)
 ├── scripts/validate.sh      sandboxed harness — bash/zsh syntax + shellcheck +
 │                            sandboxed shell load + bootstrap dry-run + Brewfile parse
@@ -64,10 +75,29 @@ Linux is a real-but-secondary target — ssh into a server, want personal config
 *not* install packages (distros vary, you usually want minimum footprint). The
 modern CLI baseline activates as soon as you `apt`/`dnf` the tools you want.
 
+**zsh is not a prerequisite.** Only four files need it (`.zshrc`, `.zprofile`,
+`.zsh_options`, `.zsh_keys`) and without it they are inert, not broken. Everything
+else links and works: `.profile` is POSIX and is read by login bash, `.gitconfig`
+by git, `.scripts/` and the agent context by anything. So a container or a shared
+box where you have no root still gets most of the value, and the zsh files start
+working the moment zsh appears — no re-run needed.
+
+### Setting up a remote or agent host
+
+```bash
+ssh <host> "git clone https://github.com/ignaciojimenez/dotfiles ~/dotfiles"
+ssh <host> "~/dotfiles/bootstrap.sh --dry-run"   # inspect, then re-run without --dry-run
+ssh <host> "sudo apt install -y zsh"             # optional: only for interactive shell use
+```
+
+Refreshing later is `cd ~/dotfiles && git pull && ./bootstrap.sh` — manual by design,
+so a remote host never changes underneath you. `bootstrap.sh` is fully `SCRIPT_DIR`
+relative, so the clone can live anywhere and the running user's name doesn't matter.
+
 ## Validation
 
 ```bash
-./scripts/validate.sh        # 21 checks, zero side effects on your environment
+./scripts/validate.sh        # 22 checks, zero side effects on your environment
 ```
 
 ## Documentation

@@ -7,8 +7,12 @@ export PYTHONIOENCODING='UTF-8';
 export LANG='en_US.UTF-8';
 export LC_ALL='en_US.UTF-8';
 
-# Highlight section titles in manual pages.
-export LESS_TERMCAP_md="$(tput bold; tput setaf 3)";
+# Highlight section titles in manual pages. Guarded because .exports is reached
+# via .profile by non-interactive logins too (`ssh host cmd`, cron, agent runs),
+# where $TERM is unset — unguarded, tput writes an error to stderr on every one.
+if [ -n "${TERM:-}" ] && [ "${TERM}" != 'dumb' ] && command -v tput >/dev/null 2>&1; then
+    export LESS_TERMCAP_md="$(tput bold; tput setaf 3)";
+fi
 
 # Don’t clear the screen after quitting a manual page.
 export MANPAGER='less -X';

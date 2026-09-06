@@ -9,6 +9,11 @@ export PATH="/usr/local/opt/openjdk/bin:/usr/local/sbin:$HOME/Library/Python/3.1
 # Windsurf PATH
 export PATH="$HOME/.codeium/windsurf/bin:$PATH"
 
+# MacPorts (installer added it 2025-11-08; kept manually). Guarded on the
+# directory, so it's a no-op off macOS. Lives here rather than .zprofile
+# because PATH is shell-agnostic — bash logins need it too.
+[ -d /opt/local/bin ] && export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+
 export EDITOR='vim'
 
 # Load core environment variables that should be available in all contexts

@@ -44,6 +44,7 @@ BASH_FILES=(
   thefiles/.profile
   thefiles/.security
   thefiles/.shell_options
+  thefiles/.shell_tools
   thefiles/.scripts/brew_maintain
   thefiles/.scripts/ansible-vault-pass
 )
@@ -151,7 +152,32 @@ else
   echo "$out" | sed 's/^/    /'
 fi
 
-# ─── 6. Brewfile parses + check ──────────────────────────────────────────────
+# ─── 6. Agent context budget ─────────────────────────────────────────────────
+# The canonical file is symlinked into Devin Desktop (Windsurf) at
+# ~/.codeium/windsurf/memories/global_rules.md, which caps global rules at
+# 6,000 characters. Over budget it would be silently truncated there while
+# still looking fine everywhere else — so fail loudly here instead.
+section "agent context"
+AGENT_CTX="agent-context/AGENTS.md"
+AGENT_CTX_MAX=6000
+if [[ -f "$AGENT_CTX" ]]; then
+  chars=$(wc -c < "$AGENT_CTX" | tr -d ' ')
+  if [[ "$chars" -le "$AGENT_CTX_MAX" ]]; then
+    ok "$AGENT_CTX within budget ($chars/$AGENT_CTX_MAX chars)"
+  else
+    fail "$AGENT_CTX over budget ($chars/$AGENT_CTX_MAX chars) — would truncate in Windsurf"
+  fi
+  # The importer must actually import, or Claude Code silently loses everything.
+  if grep -q '^@~/.agent-context/AGENTS.md' .claude/CLAUDE.md 2>/dev/null; then
+    ok ".claude/CLAUDE.md imports the canonical context"
+  else
+    fail ".claude/CLAUDE.md is missing the @~/.agent-context/AGENTS.md import"
+  fi
+else
+  fail "$AGENT_CTX not found"
+fi
+
+# ─── 7. Brewfile parses + check ──────────────────────────────────────────────
 if [[ "$QUICK" -eq 0 ]]; then
   section "Brewfile (read-only)"
   if [[ -f thefiles/Brewfile ]]; then

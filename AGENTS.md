@@ -38,13 +38,38 @@ get symlinked into `$HOME`. **A new dotfile in `thefiles/` will not
 be linked unless it's added there.** Notably: `.gitconfig`,
 `.ansible_preauth`, `.starship.toml` are all in the whitelist.
 
-Two macOS-only symlinks are handled *outside* `get_dotfiles`, in
-dedicated guarded blocks at the end of `create_symlinks` (they aren't
-flat dotfiles in `thefiles/`): `~/Workspaces -> ~/Documents/Workspaces`,
-and the AI-context wiring — `~/.agent-context -> ` the iCloud
-`AgentContext/` vault plus `~/.claude/CLAUDE.md -> .claude/CLAUDE.md`
-(the tracked one-line file that imports the vault's `AGENTS.md`). The
-`AGENTS.md` content itself is **not** in this repo — iCloud owns it.
+Some symlinks are handled *outside* `get_dotfiles`, in dedicated blocks at
+the end of `create_symlinks` (they aren't flat dotfiles in `thefiles/`).
+`~/Workspaces -> ~/Documents/Workspaces` is macOS-only. The AI-context
+wiring runs on **every** platform, because Linux agent hosts are the whole
+point of it — see `docs/decisions.md` (2026-08-04).
+
+### AI agent context
+
+`agent-context/AGENTS.md` is the canonical personal context for every agent
+harness — tracked here, budgeted at 6,000 characters, enforced by
+`scripts/validate.sh`. Don't confuse it with *this* file, which is
+repo-scoped guidance about the dotfiles repo itself.
+
+`bootstrap.sh` links `~/.agent-context -> agent-context/`, then points each
+harness's global-config path at it. Everything routes through that one
+indirection, so no username or clone location is ever hardcoded:
+
+| Path | Harness | Status |
+|---|---|---|
+| `~/.claude/CLAUDE.md` → `.claude/CLAUDE.md` | Claude Code (also read by OpenCode + Devin CLI) | **confirmed working** |
+| `~/.config/opencode/AGENTS.md` | OpenCode | wired, unverified |
+| `~/.config/devin/AGENTS.md` | Devin CLI | wired, unverified |
+| `~/.gemini/AGENTS.md` | Gemini CLI (needs `context.fileName`, see README) | wired, unverified |
+| `~/.codeium/windsurf/memories/global_rules.md` | Devin Desktop / Windsurf | wired, unverified |
+
+"Wired, unverified" means the symlink is created but nobody has confirmed
+that harness actually loads it. Say so rather than claiming coverage — the
+previous version of this setup asserted five harnesses read the file when
+only one did.
+
+`~/.gemini/GEMINI.md` is **deliberately not linked**: Antigravity writes to
+it, and a symlink would let it overwrite the tracked file.
 
 ### Linux fallback
 

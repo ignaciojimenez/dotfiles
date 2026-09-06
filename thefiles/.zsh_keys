@@ -38,6 +38,3 @@ zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
 bindkey '^[[A' up-line-or-beginning-search
 bindkey '^[[B' down-line-or-beginning-search
-
-# Set terminal type properly
-export TERM=xterm-256color
