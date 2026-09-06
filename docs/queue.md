@@ -96,6 +96,27 @@ up right now", exclude `needs:choco`.
 5. Write the reasoning to the repo, not to Linear.
 6. Close it — or hand it back, stating plainly what was not verified.
 
+## Finishing something you may not close
+
+An agent that verifies a human-owned issue is done and then says nothing leaves the
+queue stale — which is the disease this system exists to cure, arriving by the back
+door. Silence is not deference.
+
+So there are three outcomes, not two:
+
+| Situation | Do |
+|---|---|
+| `agent/*` issue, condition clear N sweeps running | close it |
+| Human-owned issue, acceptance criterion **met** | **comment with the evidence, move to `In Review`** |
+| Anything you could not verify | say so, leave it in `Todo` |
+
+`In Review` means *an agent believes this is done and a human has not confirmed it.*
+It is the only use of that status. Closing stays with whoever owns the issue.
+
+🔴 The comment must carry **the evidence and its limits**, not a verdict. "Pushed at
+20:33 per the local reflog; that proves the push happened, it is not a live read of
+the remote" is useful. "Done ✅" is not.
+
 ## Unattended work
 
 Fine: research, investigation, and writing — anything whose deliverable is a

@@ -44,7 +44,8 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
   is shelved and not read.
 - Labels decide who may close: `agent/*` is machine-owned, auto-closes only
   on repeated clear sweeps, and never notifies. `needs:choco` is blocked on
-  me. **No label means it is mine — never close it for me.**
+  me. **No label means it is mine — never close it for me; say so
+  in a comment and move it to `In Review` instead.**
 - Closing is subject to the honesty rule below: force the condition.
 
 Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
