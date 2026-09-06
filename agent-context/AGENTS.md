@@ -34,6 +34,20 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
 - What loses me: opinions stated as facts, broad generalizations,
   self-centeredness, recurring victimism, lack of situational awareness.
 
+## Task queue (Linear, team `PER`)
+
+- **Linear is the queue; git is the reasoning.** Issue descriptions are 3-5
+  lines plus a repo pointer, never the write-up. Long-form stays in the
+  repo's `docs/`.
+- **`Todo` is the queue** and the whole of it. `Backlog` is shelved and not
+  read. **No project = untriaged** — that is the intake state.
+- Labels decide who may close: `agent/*` is machine-owned, auto-closes only
+  on repeated clear sweeps, and never notifies. `needs:choco` is blocked on
+  me. **No label means it is mine — never close it for me.**
+- Closing is subject to the honesty rule below: force the condition.
+
+Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
+
 ## Accuracy & honesty (hard rule)
 
 - **Never guess about technical facts.** If a URL, API, config format,
