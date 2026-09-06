@@ -15,6 +15,26 @@ agents actually load.
 - **No project = untriaged.** That is the intake state, and it is queryable —
   which is what makes it a state rather than a hope.
 
+### The three states, and why intake is not `Triage`
+
+`Backlog` carries two meanings, told apart by the project field — so read both:
+
+| Status | Project | Means |
+|---|---|---|
+| `Todo` | set | the queue |
+| `Backlog` | **none** | **untriaged intake** — captured, not yet judged |
+| `Backlog` | set | shelved on purpose, not read |
+
+**Untriaged is defined by having no project, not by a status.** The intake sweep
+below keys on `project: null` and ignores status, so an item captured from a
+phone lands wherever the capturing client puts it and is still found.
+
+🔴 **Do not enable Linear's Triage feature to "fix" this.** Verified working
+2026-09-06: an issue captured from the Claude mobile app landed in `Backlog`
+with no project and the sweep returned it. Triage would add a dependency for
+something already solved, and Linear holding no logic is what keeps the exit
+cheap.
+
 ## Who may close what
 
 | Label | Means | May an agent close it? |

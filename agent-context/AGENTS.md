@@ -39,8 +39,9 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
 - **Linear is the queue; git is the reasoning.** Issue descriptions are 3-5
   lines plus a repo pointer, never the write-up. Long-form stays in the
   repo's `docs/`.
-- **`Todo` is the queue** and the whole of it. `Backlog` is shelved and not
-  read. **No project = untriaged** — that is the intake state.
+- **`Todo` is the queue** and the whole of it. **No project = untriaged**,
+  whatever its status — that is the intake state. `Backlog` *with* a project
+  is shelved and not read.
 - Labels decide who may close: `agent/*` is machine-owned, auto-closes only
   on repeated clear sweeps, and never notifies. `needs:choco` is blocked on
   me. **No label means it is mine — never close it for me.**
