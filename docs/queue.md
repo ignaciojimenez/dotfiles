@@ -15,6 +15,26 @@ agents actually load.
 - **No project = untriaged.** That is the intake state, and it is queryable —
   which is what makes it a state rather than a hope.
 
+### The three states, and why intake is not `Triage`
+
+`Backlog` carries two meanings, told apart by the project field — so read both:
+
+| Status | Project | Means |
+|---|---|---|
+| `Todo` | set | the queue |
+| `Backlog` | **none** | **untriaged intake** — captured, not yet judged |
+| `Backlog` | set | shelved on purpose, not read |
+
+**Untriaged is defined by having no project, not by a status.** The intake sweep
+below keys on `project: null` and ignores status, so an item captured from a
+phone lands wherever the capturing client puts it and is still found.
+
+🔴 **Do not enable Linear's Triage feature to "fix" this.** Verified working
+2026-09-06: an issue captured from the Claude mobile app landed in `Backlog`
+with no project and the sweep returned it. Triage would add a dependency for
+something already solved, and Linear holding no logic is what keeps the exit
+cheap.
+
 ## Who may close what
 
 | Label | Means | May an agent close it? |
@@ -75,6 +95,27 @@ up right now", exclude `needs:choco`.
    not a check that works.
 5. Write the reasoning to the repo, not to Linear.
 6. Close it — or hand it back, stating plainly what was not verified.
+
+## Finishing something you may not close
+
+An agent that verifies a human-owned issue is done and then says nothing leaves the
+queue stale — which is the disease this system exists to cure, arriving by the back
+door. Silence is not deference.
+
+So there are three outcomes, not two:
+
+| Situation | Do |
+|---|---|
+| `agent/*` issue, condition clear N sweeps running | close it |
+| Human-owned issue, acceptance criterion **met** | **comment with the evidence, move to `In Review`** |
+| Anything you could not verify | say so, leave it in `Todo` |
+
+`In Review` means *an agent believes this is done and a human has not confirmed it.*
+It is the only use of that status. Closing stays with whoever owns the issue.
+
+🔴 The comment must carry **the evidence and its limits**, not a verdict. "Pushed at
+20:33 per the local reflog; that proves the push happened, it is not a live read of
+the remote" is useful. "Done ✅" is not.
 
 ## Unattended work
 
