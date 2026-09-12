@@ -35,19 +35,64 @@ with no project and the sweep returned it. Triage would add a dependency for
 something already solved, and Linear holding no logic is what keeps the exit
 cheap.
 
-## Who may close what
+## The label contract
+
+Three groups, each answering a different question. Groups are mutually exclusive
+in Linear, which is the point: an issue has one owner, one current blocker, one
+kind.
+
+### `agent/*` — who may close it
 
 | Label | Means | May an agent close it? |
 |---|---|---|
 | `agent/fleet` | machine-owned, reconciled from host state | yes — on N consecutive clear sweeps, never one |
 | `agent/sec` | machine-owned, reconciled from scanner state | yes — same rule |
-| `needs:choco` | blocked on Ignacio: a decision, or something physical | no |
-| *(no label)* | his | **no** |
+| *(neither)* | Ignacio's | **no** |
 
-Removing an `agent/*` label is the **adopt** gesture: it moves the issue from
-the machine to a human and auto-close stops applying.
+Removing an `agent/*` label is the **adopt** gesture: it moves the issue from the
+machine to a human and auto-close stops applying.
 
 `agent/*` issues **never notify**. `#home-alerts` pages; the tracker does not.
+
+### `needs/*` — what blocks it right now
+
+| Label | Means | Doable from a phone? |
+|---|---|---|
+| `needs/decision` | blocked on Ignacio's judgement | **yes** |
+| `needs/hands` | blocked on physical access to hardware | no, and no agent will ever do it |
+| `needs/laptop` | blocked on a real working session — shell, repo, tests | not today; an agent with a shell satisfies it |
+| *(none)* | nothing blocking | yes |
+
+🔴 It records what blocks it **now**, not everything it will eventually need. An
+issue awaiting sign-off is `needs/decision` even though the work then wants a
+laptop; the label changes when the decision lands.
+
+📌 `needs/laptop` is a statement about the *work*, not about who is available.
+When an executor has a shell of its own it satisfies that requirement without
+anything being relabelled.
+
+### `kind/*` — what sort of work
+
+`broken` · `risk` · `debt` · `new` · `improvement`
+
+Orthogonal to priority: a broken thing can be low priority and a new capability
+can be urgent. It matters most to an executor, because **a fix has an obvious
+acceptance test — the broken thing works — and a new capability does not.**
+`risk` is the one that is easy to miss: works today, known weakness or
+unverified control.
+
+### Size
+
+**Not a label.** `effort` is a reserved name in Linear because estimates are a
+first-class field; the team uses t-shirt estimates, which sort and filter
+without spending labels.
+
+### Addressing grouped labels
+
+Linear stores a grouped label's name *without* its group, so a bare `decision`
+or `new` is ambiguous across groups. Everywhere above the tracker adapter,
+labels are written as `parent/child` — `agent/fleet`, `needs/laptop`. The
+adapter composes on read and resolves on write.
 
 ## Writing an issue
 
@@ -83,7 +128,8 @@ The `state` clause is not optional. Without it, closed and cancelled intake
 keeps matching forever — the same never-retracts failure in a different shape.
 
 The queue itself is `state = Todo`, ordered by priority. For "what can I pick
-up right now", exclude `needs:choco`.
+up right now", exclude `needs/decision` and `needs/hands`; add
+`estimate: {lte: 2}` for what fits an hour.
 
 ## Working an item
 
@@ -122,9 +168,36 @@ the remote" is useful. "Done ✅" is not.
 Fine: research, investigation, and writing — anything whose deliverable is a
 verdict or a document.
 
-Not fine: anything whose acceptance criterion is a forced failure against a
-live host. Most fleet items say so explicitly. An agent that cannot run the
-check cannot honestly close the issue, so it hands back the finding instead.
+Not fine, **today**: anything whose acceptance criterion is a forced failure
+against a live host. Most fleet items say so explicitly. An agent that cannot
+run the check cannot honestly close the issue, so it hands back the finding
+instead.
+
+### Where this is going
+
+The target is that an executor takes an issue from `Todo` and carries it all
+the way to a tested change on a branch, then hands it back at `In Review` for a
+human to read the diff, tap, and deploy. Only three things stay human, and only
+one of them is a limitation:
+
+| Stays human | Why |
+|---|---|
+| `needs/decision` | it is a judgement, not a task. An agent researches and recommends; the call is Ignacio's |
+| `needs/hands` | nothing else can stand at the cabinet with a tape measure |
+| the deploy tap | by design — every command gated by an `ask` *and* a biometric tap. One signature means one human was present |
+
+🔴 **`needs/laptop` is not on that list, and that is the point.** It says the
+work needs a shell, a checkout and a test — not that it needs *Ignacio*. An
+executor with its own shell satisfies it, and nothing has to be relabelled for
+that to become true.
+
+📌 **The container rig is what unlocks this, which makes it a prerequisite
+rather than hygiene.** "Force the condition and watch the alert fire" is
+unrunnable for an agent against production and perfectly runnable against a
+container it can create and destroy. Until that exists, every fleet issue has
+to be verified by a human, so an executor can draft but never finish. The
+operator-mode design already assumes it: approval means seeing a diff **and** a
+container test result, never a command that has run nowhere.
 
 ## Not built yet
 
