@@ -2,6 +2,12 @@
 
 One-liner record of architecture/strategy calls. Newest first.
 
+## 2026-09-17
+
+- **Who may close depends on who initiated, not only on the label.** The rule said no agent ever closes an issue Ignacio owns. A session he explicitly pointed at `PER-60` did the work, tested it, deployed it and closed it — correctly, and against the letter of the contract. The rule was written for an *unattended sweep*, which must never retract work it cannot judge; applying it to a session he asked for buys no safety and makes him re-close everything he delegates. Narrowed: a sweep never closes his issues, a session he asked may once it has verified, and `In Review` now means specifically *an agent believes this is done and nobody asked it to*.
+- **The contract was found wrong by reading a transcript, not by asking how it went.** He reported no friction. The session log showed it: two human messages, and four `Artifact` calls maintaining a dashboard the Linear move exists to retire, because a stale `SessionStart` hook still called that artifact the primary queue. Outcome-watching would never have surfaced either — the work was clean and the waste was in tool calls nobody sees.
+- **`agent-context/AGENTS.md` is at 5,976 of 6,000 characters.** The next thing added has to displace something. That is the budget working as intended, but it means the canonical file is now full and further rules belong in `docs/queue.md` behind the pointer.
+
 ## 2026-09-06
 
 - **Linear is the queue; this repo holds the protocol that makes it usable.** The queue itself lives in Linear (team `PER`), but the *instructions* for operating it belong here, because `agent-context/AGENTS.md` is the one file every harness loads and the one thing a new laptop bootstraps. Split in two on purpose: the behaviour-changing minimum goes in the budgeted canonical file — where the queue is, that `Todo` is all of it, that no project means untriaged, and above all **which labels permit an agent to close an issue** — while the full protocol, queries and known gaps go in `docs/queue.md`. Passes the standing content test: this changes what an agent *does*, unlike the hostnames and channel names that were removed on 2026-08-04. The canonical file is now 5,777/6,000 chars, so the next addition must displace something.
