@@ -44,8 +44,9 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
   is shelved and not read.
 - `agent/*` is machine-owned: auto-closes only on repeated clear sweeps, never
   notifies. `needs/*` is what blocks it **now**, `kind/*` what sort of work it
-  is, size is the estimate field. **No `agent/*` label means it is mine — never
-  close it for me; say so in a comment and move it to `In Review`.**
+  is, size is the estimate field. **No `agent/*` label means it is
+  mine: an unattended sweep never closes it; a session I asked to do the work
+  may, once it has verified. Unsure — comment and use `In Review`.**
 - Closing is subject to the honesty rule below: force the condition.
 
 Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.

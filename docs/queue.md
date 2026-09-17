@@ -142,22 +142,30 @@ up right now", exclude `needs/decision` and `needs/hands`; add
 5. Write the reasoning to the repo, not to Linear.
 6. Close it — or hand it back, stating plainly what was not verified.
 
-## Finishing something you may not close
+## Finishing something
 
-An agent that verifies a human-owned issue is done and then says nothing leaves the
-queue stale — which is the disease this system exists to cure, arriving by the back
-door. Silence is not deference.
+An agent that verifies an issue is done and then says nothing leaves the queue
+stale — which is the disease this system exists to cure, arriving by the back
+door. **Silence is not deference.**
 
-So there are three outcomes, not two:
+What you may do depends on how you got here, not only on the label:
 
 | Situation | Do |
 |---|---|
-| `agent/*` issue, condition clear N sweeps running | close it |
-| Human-owned issue, acceptance criterion **met** | **comment with the evidence, move to `In Review`** |
+| `agent/*` issue, condition clear for the close window | close it |
+| **Ignacio asked this session to work the issue, and it is verified** | **close it, with a comment saying how it was verified** |
+| Verified, but nobody asked you — a sweep noticed it is done | comment with the evidence, move to `In Review` |
 | Anything you could not verify | say so, leave it in `Todo` |
 
-`In Review` means *an agent believes this is done and a human has not confirmed it.*
-It is the only use of that status. Closing stays with whoever owns the issue.
+🔴 **The distinction is who initiated, not who owns.** The rule against closing
+Ignacio's issues exists to stop an *unattended sweep* retracting work it cannot
+judge. A session he explicitly pointed at an issue is not that: making him
+re-close everything he delegated is friction with no safety bought — he asked
+for the work, and the close is part of it.
+
+`In Review` therefore means *an agent believes this is done and nobody asked it
+to* — a sweep's finding, awaiting a human's word. It is the only use of that
+status.
 
 🔴 The comment must carry **the evidence and its limits**, not a verdict. "Pushed at
 20:33 per the local reflog; that proves the push happened, it is not a live read of
