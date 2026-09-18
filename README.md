@@ -43,6 +43,10 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
   ```json
   { "context": { "fileName": ["AGENTS.md", "GEMINI.md"] } }
   ```
+- **Agent session restore** (macOS + Ghostty) — Claude Code hooks record every
+  session; after a reboot, `agent-restore` reopens the named ones in one Ghostty
+  window, a tab per repo and a split per session. See
+  [`docs/agent-sessions.md`](docs/agent-sessions.md).
 
 ## Layout
 
@@ -52,6 +56,7 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 ├── env_bootstrap.sh         OS-specific provisioning sourced by bootstrap.sh -k
 ├── agent-context/AGENTS.md  canonical personal context for all agent harnesses
 ├── .claude/CLAUDE.md        Claude Code importer: @-imports the canonical context
+├── agent-sessions/claude/   Claude Code plugin: session hooks for agent-sessions
 ├── thefiles/                everything that gets symlinked
 │   ├── Brewfile             declarative brew bundle
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper
@@ -59,13 +64,16 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 │   ├── .shell_options       shell-agnostic options, sourced by .zsh_options
 │   ├── .shell_tools         starship/zoxide/direnv/fzf init, shared across shells
 │                            (sourced with the shell name: `.shell_tools zsh`)
-│   └── .scripts/            user-bin scripts (brew_maintain, ansible-vault-pass)
+│   └── .scripts/            user-bin scripts (brew_maintain, ansible-vault-pass,
+│                            agent-sessions)
 ├── scripts/validate.sh      sandboxed harness — bash/zsh syntax + shellcheck +
 │                            sandboxed shell load + bootstrap dry-run + Brewfile parse
+│                            + agent-sessions contract test
 ├── .github/workflows/       CI: shellcheck + bash/zsh -n + brew bundle + bootstrap dry-run
 ├── AGENTS.md                conventions / non-obvious bits for AI coding agents
 └── docs/
-    └── decisions.md         architectural-call log (newest first; includes known to-dos)
+    ├── decisions.md         architectural-call log (newest first; includes known to-dos)
+    └── agent-sessions.md    how session restore decides what to reopen, and why
 ```
 
 ## Linux
@@ -103,4 +111,5 @@ relative, so the clone can live anywhere and the running user's name doesn't mat
 ## Documentation
 
 - [`docs/decisions.md`](docs/decisions.md) — architectural calls + known to-dos
+- [`docs/agent-sessions.md`](docs/agent-sessions.md) — agent session restore
 - [`AGENTS.md`](AGENTS.md) — non-obvious bits for AI coding agents

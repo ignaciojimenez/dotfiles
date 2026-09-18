@@ -34,7 +34,9 @@ jobs:
             thefiles/.security \
             thefiles/.shell_options \
             thefiles/.scripts/brew_maintain \
-            thefiles/.scripts/ansible-vault-pass
+            thefiles/.scripts/ansible-vault-pass \
+            thefiles/.scripts/agent-sessions \
+            scripts/test-agent-sessions.sh
 
   shell-syntax:
     runs-on: ubuntu-latest
@@ -55,7 +57,9 @@ jobs:
                    thefiles/.security \
                    thefiles/.shell_options \
                    thefiles/.scripts/brew_maintain \
-                   thefiles/.scripts/ansible-vault-pass; do
+                   thefiles/.scripts/ansible-vault-pass \
+                   thefiles/.scripts/agent-sessions \
+                   scripts/test-agent-sessions.sh; do
             bash -n "$f" && echo "ok: $f"
           done
 
@@ -65,6 +69,14 @@ jobs:
                    thefiles/.zsh_options thefiles/.zsh_keys; do
             zsh -n "$f" && echo "ok: $f"
           done
+
+  agent-sessions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # jq and git ship with the runner image; the test needs nothing else.
+      - name: Contract test
+        run: scripts/test-agent-sessions.sh
 
   brewfile:
     runs-on: macos-latest

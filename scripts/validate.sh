@@ -47,6 +47,8 @@ BASH_FILES=(
   thefiles/.shell_tools
   thefiles/.scripts/brew_maintain
   thefiles/.scripts/ansible-vault-pass
+  thefiles/.scripts/agent-sessions
+  scripts/test-agent-sessions.sh
 )
 
 ZSH_FILES=(
@@ -114,8 +116,8 @@ if command -v zsh >/dev/null; then
   trap 'rm -rf "$SANDBOX"' EXIT
   for f in .zshrc .zprofile .zsh_options .zsh_keys .profile .exports \
            .common_functions .security .aliases .shell_options \
-           .ansible_preauth; do
-    [[ -f "$ROOT/thefiles/$f" ]] && ln -s "$ROOT/thefiles/$f" "$SANDBOX/$f"
+           .ansible_preauth .scripts; do
+    [[ -e "$ROOT/thefiles/$f" ]] && ln -s "$ROOT/thefiles/$f" "$SANDBOX/$f"
   done
   if HOME="$SANDBOX" zsh -i -c ': loaded' 2>/tmp/validate-err.$$; then
     ok "interactive zsh loads cleanly with sandboxed \$HOME"
@@ -211,7 +213,40 @@ else
   fail "$AGENT_CTX not found"
 fi
 
-# ─── 7. Brewfile parses + check ──────────────────────────────────────────────
+# ─── 7. Agent sessions ───────────────────────────────────────────────────────
+# The contract test replays real hook payload shapes through the tracker. The
+# wiring check asks what the 2026-09-18 failure taught: not whether the files
+# look right, but whether Claude Code would actually load them.
+section "agent sessions"
+if command -v jq >/dev/null && command -v git >/dev/null; then
+  if out=$(scripts/test-agent-sessions.sh 2>&1); then
+    ok "contract test ($(tail -n 1 <<<"$out" | sed 's/^ *//'))"
+  else
+    fail "contract test"
+    echo "$out" | sed 's/^/    /'
+  fi
+else
+  skip "contract test (needs jq and git)"
+fi
+if ! readlink -f / >/dev/null 2>&1; then
+  skip "agent-sessions wiring (readlink -f unavailable)"
+elif [[ ! -e "$HOME/.agent-context" ]]; then
+  skip "agent-sessions wiring (bootstrap has not run on this machine)"
+else
+  plugin="$HOME/.claude/skills/agent-sessions"
+  got="$(readlink -f "$plugin" 2>/dev/null || true)"
+  hook="$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$plugin/hooks/hooks.json" 2>/dev/null |
+          sed -E 's/^"([^"]*)".*/\1/; s|\$HOME|'"$HOME"'|')"
+  if [[ "$got" != "$ROOT/agent-sessions/claude" ]]; then
+    fail "${plugin/#$HOME/~} -> ${got:-(missing)}, expected ./agent-sessions/claude"
+  elif [[ ! -x "$hook" ]]; then
+    fail "hook command ${hook:-(unreadable)} is not executable"
+  else
+    ok "agent-sessions plugin linked into ~/.claude/skills, hook command executable"
+  fi
+fi
+
+# ─── 8. Brewfile parses + check ──────────────────────────────────────────────
 if [[ "$QUICK" -eq 0 ]]; then
   section "Brewfile (read-only)"
   if [[ -f thefiles/Brewfile ]]; then
