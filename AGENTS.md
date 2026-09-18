@@ -71,6 +71,16 @@ only one did.
 `~/.gemini/GEMINI.md` is **deliberately not linked**: Antigravity writes to
 it, and a symlink would let it overwrite the tracked file.
 
+### Agent sessions
+
+`agent-sessions/claude/` is a Claude Code plugin with no marketplace:
+`bootstrap.sh` links it to `~/.claude/skills/agent-sessions`, and Claude Code
+loads any plugin manifest found there, hooks included. Its hooks call
+`~/.scripts/agent-sessions`, so both links must exist — `validate.sh` asserts
+both. The link points at the working tree, so the plugin follows whatever
+branch is checked out. Behaviour and the evidence behind it:
+`docs/agent-sessions.md`; the contract test is `scripts/test-agent-sessions.sh`.
+
 ### Linux fallback
 
 `bootstrap.sh` symlinks the same dotfiles on Linux but

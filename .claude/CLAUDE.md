@@ -13,4 +13,5 @@ repo is cloned or which user runs it.
 - Config lives in `~/.claude/settings.json` (machine-specific, not tracked):
   model `opus`, `effortLevel: high`, theme `dark-ansi`.
 - Plugins: commit-commands, playwright, slack, clangd-lsp, cloudflare
-  (marketplace `cloudflare/skills`).
+  (marketplace `cloudflare/skills`), and `agent-sessions` — a hooks-only plugin
+  linked from this repo by `bootstrap.sh`; see `docs/agent-sessions.md`.

@@ -70,6 +70,13 @@ common(){
   if [[ -f ~/.ansible_preauth ]]; then
     source ~/.ansible_preauth
   fi
+
+  # Reopen the agent sessions a reboot closed (docs/agent-sessions.md)
+  if [ -f "$HOME/.scripts/agent-sessions" ]; then
+    alias agent-restore='$HOME/.scripts/agent-sessions restore'
+  else
+    echo ".aliases: agent-sessions not found" >&2
+  fi
 }
 
 macos(){
