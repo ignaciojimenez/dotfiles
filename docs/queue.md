@@ -48,7 +48,7 @@ kind.
 
 | Label | Means | May an agent close it? |
 |---|---|---|
-| `agent/fleet` | machine-owned, reconciled from host state | yes — on N consecutive clear sweeps, never one |
+| `agent/fleet` | machine-owned, reconciled from host state | yes — once absent for a time window (24 h), and only on a sweep that saw everything |
 | `agent/sec` | machine-owned, reconciled from scanner state | yes — same rule |
 | *(neither)* | Ignacio's | **no** |
 
@@ -226,16 +226,31 @@ to be verified by a human, so an executor can draft but never finish. The
 operator-mode design already assumes it: approval means seeing a diff **and** a
 container test result, never a command that has run nowhere.
 
+## What writes to this queue
+
+[`todo-harness`](https://github.com/ignaciojimenez/todo-harness) runs on GitHub
+Actions every six hours, with three sources:
+
+- **triage** — sets a project on untriaged issues when exactly one is named,
+  strips labels outside the contract, reports everything else.
+- **security** — Dependabot, code scanning and secret scanning across every
+  repo, into `agent/sec`. Also opens an issue when a scanner is off.
+- **osv** — OSV for packages GitHub has no alert for, into `agent/sec`.
+
+It keeps no state of its own: a finding's identity is its URL, stored as a
+Linear attachment on the issue, and absence is a timestamp beside it. Linear
+holds data, never logic, so the exit is still an export. A sweep that could
+not see everything opens but never closes. Rules and reasons are in its
+`docs/decisions.md`.
+
 ## Not built yet
 
 Recorded so no agent assumes otherwise:
 
-- **Nothing writes to this queue automatically.** There is no agent-lxc sweep
-  and no scanner reconciliation. Every issue was created by hand.
-- Auto-close, the key→issue map in `~/.agent/`, and the per-run heartbeat
-  (`swept N, opened M, closed K`) are designed and unbuilt.
-- Scanner intake will be **poll-and-reconcile, never push**. An event cannot
+- **Nothing writes `agent/fleet`.** The agent-lxc fleet source is designed
+  and unbuilt; every fleet issue is still created by hand.
+- agent-lxc Tier 2 judgement, which may comment on a state issue but never
+  open its own.
+- Scanner intake stays **poll-and-reconcile, never push**. An event cannot
   retract, and a finding that outlives its condition is the exact failure this
   system exists to prevent.
-- Linear holds **no logic**, deliberately — the key→issue map lives on the
-  box. That is what keeps the exit cheap.
