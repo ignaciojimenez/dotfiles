@@ -11,6 +11,6 @@ belong in the portable file.
 repo is cloned or which user runs it.
 
 - Config lives in `~/.claude/settings.json` (machine-specific, not tracked):
-  model `opus`, `effortLevel: high`, theme `light-ansi`.
+  model `opus`, `effortLevel: high`, theme `dark-ansi`.
 - Plugins: commit-commands, playwright, slack, clangd-lsp, cloudflare
   (marketplace `cloudflare/skills`).
