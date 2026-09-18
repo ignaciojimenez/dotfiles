@@ -36,9 +36,9 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
 
 ## Task queue (Linear, team `PER`)
 
-- **Linear is the queue; git is the reasoning.** Issue descriptions are 3-5
-  lines plus a repo pointer, never the write-up. Long-form stays in the
-  repo's `docs/`.
+- **Linear is the queue; git is the reasoning.** An issue is one deliverable
+  with an acceptance test; its steps go inside it. The write-up stays in
+  the repo's `docs/`.
 - **`Todo` is the queue** and the whole of it. **No project = untriaged**,
   whatever its status — that is the intake state. `Backlog` *with* a project
   is shelved and not read.

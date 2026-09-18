@@ -9,7 +9,10 @@ agents actually load.
 
 - Workspace `lacopadeeuropa`, one team: **`PER`**.
 - **Projects**: one per active repo, plus `Fleet` (hosts, not repos) and
-  `No repo`.
+  `No repo` — and a **goal project** when one outcome spans several repos
+  (`Build from anywhere`). Its milestones are the ordered stages, so the path
+  to the goal is readable in one place. Linear initiatives cannot do this:
+  they group whole projects, never individual issues.
 - **Statuses**: `Backlog → Todo → In Progress → Done`. `Todo` is the queue and
   the whole of it. `Backlog` is shelved on purpose and is not read.
 - **No project = untriaged.** That is the intake state, and it is queryable —
@@ -96,10 +99,26 @@ adapter composes on read and resolves on write.
 
 ## Writing an issue
 
-Three to five lines plus a pointer to the repo, and **never the prose**. The
-write-up belongs in the repo's `docs/` — `TODO.md`,
-`ARCHITECTURE_DECISIONS.md`, `archive/DONE.md`. If an issue needs reading
-twice, it is too long.
+**One issue, one deliverable, one acceptance test.** Steps toward it go
+inside the issue as an ordered list, not as sibling issues — a queue of steps
+hides the path to the goal, and nothing in it is ever finished on its own.
+
+**Never the prose.** The reasoning belongs in the repo's `docs/` — `TODO.md`,
+`ARCHITECTURE_DECISIONS.md`, `archive/DONE.md` — and the issue links it. An
+issue carries what to do, in what order, what not to do, and how to prove it
+worked. If it needs reading twice, reasoning leaked in.
+
+### When to merge issues, and when not to
+
+**Merge** issues that finish together: the same host or session, a shared
+mechanism, or one physical trip. Mark each folded issue *duplicate of* the
+batch, so its history and do-nots stay linked rather than lost.
+
+**Do not merge** issues whose triggers or acceptance tests differ — readings
+waiting on separate real-world events are the common case, and one issue with
+five unrelated acceptance tests can never be closed. **Do not merge** an issue
+deliberately held behind another either: that is a sequence, and a merge hides
+it. Record it as a `blocked by` relation instead, which the queue can show.
 
 **Carry the do-nots.** Most items in this queue exist because something was
 once done in the wrong direction. An issue that omits what not to do invites
