@@ -173,6 +173,40 @@ if [[ -f "$AGENT_CTX" ]]; then
   else
     fail ".claude/CLAUDE.md is missing the @~/.agent-context/AGENTS.md import"
   fi
+
+  # Both checks above pass on a machine where every agent is reading some other
+  # file entirely: one greps the importer's text, the other measures the repo's
+  # copy. Neither asks the only question that matters — does the path the import
+  # names actually land in this repo?
+  #
+  # It did not, for three months. ~/.agent-context pointed at an iCloud folder
+  # holding an untracked August copy; Windsurf had a standalone file from
+  # February; opencode, devin and gemini had nothing at all. Every check was
+  # green throughout. Assert the wiring, not the text.
+  if ! readlink -f / >/dev/null 2>&1; then
+    skip "agent context wiring (readlink -f unavailable)"
+  elif [[ ! -e "$HOME/.agent-context" ]]; then
+    # Nothing bootstrapped here — CI, or a fresh clone. Not a failure.
+    skip "agent context wiring (bootstrap has not run on this machine)"
+  else
+    wiring_ok=1
+    for adapter in \
+      "$HOME/.agent-context:$ROOT/agent-context" \
+      "$HOME/.config/opencode/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
+      "$HOME/.config/devin/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
+      "$HOME/.gemini/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
+      "$HOME/.codeium/windsurf/memories/global_rules.md:$ROOT/agent-context/AGENTS.md" \
+      "$HOME/.claude/CLAUDE.md:$ROOT/.claude/CLAUDE.md"
+    do
+      link="${adapter%%:*}"; want="${adapter#*:}"
+      got="$(readlink -f "$link" 2>/dev/null || true)"
+      if [[ "$got" != "$want" ]]; then
+        fail "${link/#$HOME/~} -> ${got:-(missing)}, expected ${want/#$ROOT/.}"
+        wiring_ok=0
+      fi
+    done
+    [[ "$wiring_ok" -eq 1 ]] && ok "all 6 agent-context adapters resolve into this repo"
+  fi
 else
   fail "$AGENT_CTX not found"
 fi
