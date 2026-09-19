@@ -90,5 +90,18 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Symlink dry-run
-        run: ./bootstrap.sh --dry-run
+      # The runner's own HOME ships a ~/.gitconfig, which is a conflict, and a
+      # conflict fails the run. So the clean-box case runs in an empty HOME,
+      # and the conflict case is forced separately to prove it still fails.
+      - name: Symlink dry-run, clean HOME
+        run: |
+          mkdir "$RUNNER_TEMP/clean"
+          HOME="$RUNNER_TEMP/clean" ./bootstrap.sh --dry-run
+      - name: Symlink dry-run, conflict must fail
+        run: |
+          mkdir -p "$RUNNER_TEMP/conflict/.claude"
+          echo '{}' > "$RUNNER_TEMP/conflict/.claude/settings.json"
+          if HOME="$RUNNER_TEMP/conflict" ./bootstrap.sh --dry-run; then
+            echo "::error::a conflicting file did not fail the bootstrap"
+            exit 1
+          fi
