@@ -198,7 +198,8 @@ if [[ -f "$AGENT_CTX" ]]; then
       "$HOME/.config/devin/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
       "$HOME/.gemini/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
       "$HOME/.codeium/windsurf/memories/global_rules.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.claude/CLAUDE.md:$ROOT/.claude/CLAUDE.md"
+      "$HOME/.claude/CLAUDE.md:$ROOT/.claude/CLAUDE.md" \
+      "$HOME/.claude/settings.json:$ROOT/harness/claude/settings.json"
     do
       link="${adapter%%:*}"; want="${adapter#*:}"
       got="$(readlink -f "$link" 2>/dev/null || true)"
@@ -207,7 +208,9 @@ if [[ -f "$AGENT_CTX" ]]; then
         wiring_ok=0
       fi
     done
-    [[ "$wiring_ok" -eq 1 ]] && ok "all 6 agent-context adapters resolve into this repo"
+    # settings.json is the one link a harness writes through. If Claude Code
+    # ever replaces it with a regular file, this is where that shows.
+    [[ "$wiring_ok" -eq 1 ]] && ok "all 7 agent adapters resolve into this repo"
   fi
 else
   fail "$AGENT_CTX not found"
