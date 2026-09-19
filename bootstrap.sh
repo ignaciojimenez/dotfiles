@@ -288,6 +288,13 @@ create_symlinks() {
     # included, with no install step — so its adapter is one more link.
     link_with_backup "${SCRIPT_DIR}/agent-sessions/claude" "$HOME/.claude/skills/agent-sessions"
 
+    # Per-harness behaviour (docs/decisions.md, 2026-09-19). Settings have no
+    # cross-harness standard, so each harness gets its own tracked file under
+    # harness/<name>/. The link is writable on purpose: a /model or /config
+    # change lands in the working tree and shows up in `git status`, instead of
+    # drifting in an untracked copy.
+    link_with_backup "${SCRIPT_DIR}/harness/claude/settings.json" "$HOME/.claude/settings.json"
+
     # Summary
     if [[ "$CONFLICTS" -gt 0 ]]; then
         error "$CONFLICTS link(s) skipped: something else is in the way (see warnings above)"

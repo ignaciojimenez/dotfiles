@@ -1,0 +1,69 @@
+{
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "opus",
+  "enabledPlugins": {
+    "commit-commands@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "slack@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "cloudflare@cloudflare": true
+  },
+  "extraKnownMarketplaces": {
+    "cloudflare": {
+      "source": {
+        "source": "github",
+        "repo": "cloudflare/skills"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "theme": "dark-ansi",
+  "editorMode": "normal",
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Bash(ansible-lint:*)",
+      "Bash(shellcheck:*)"
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Bash(ansible-vault:*)",
+      "Bash(ansible-playbook:* --limit opnsense*)"
+    ],
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None — a personal estate, GitHub account ignaciojimenez",
+      "**Cloud provider(s)**: Cloudflare (Workers, Pages, KV, R2) via wrangler; GitHub",
+      "**Repository visibility**: PUBLIC — every repo under github.com/ignaciojimenez; treat any push as publishing",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: Ansible Vault in infrastructure-automation (vault.yml, committed encrypted), vault password via a macOS Keychain-backed helper (ANSIBLE_VAULT_PASSWORD_FILE); Cloudflare secrets via wrangler secret; never hardcode tokens, passwords, or webhooks",
+      "**Default / protected branches**: main or master per repo; work happens on feature branches and merges to the default branch are signed by the human — treat pushes to the default branch as publishing",
+      "**CI/CD deploy targets**: infrastructure-automation — ansible-playbook ansible/playbooks/site.yml / services.yml / deploy_monitoring.yml against inventory hosts (dockassist, cobra, hifipi, vinylstreamer, opnsense, proxmox/cwwk, unifi-lxc); other repos — push to GitHub, Cloudflare auto-deploys",
+      "**Network posture**: Home network — Raspberry Pis, OPNsense firewall VM, Proxmox hypervisor, LXC containers; SSH key-based auth; autonomous/agent SSH must use the -agent hostname suffix (e.g. cwwk-agent, dockassist-agent) with passphrase-free read_agent_ed25519 key as read_agent user (scoped read-only sudo); never use the main user's Secretive key for autonomous work",
+      "**Source control**: repos under github.com/ignaciojimenez and their remotes only",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: Linear team PER (the task queue); fleet, reached via SSH per infrastructure-automation's AGENTS.md — dockassist (Home Assistant, Matter Server, Cloudflared), cobra (Plex, Transmission, Samba), hifipi (MPD, Shairport, Raspotify), vinylstreamer (Icecast, Liquidsoap), opnsense (Unbound DNS, Mullvad WireGuard, CrowdSec), proxmox/cwwk (hypervisor for VMs/LXCs), unifi-lxc (UniFi Network Application)",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: Ansible Vault (vault.yml) and its plaintext contents; /config/.tado_tokens on dockassist (Tado OAuth2 credentials); {{ homeassistant_config_dir }}/secrets.yaml on dockassist (HA API token); vault password in macOS Keychain — share only with audiences cleared at the [named+specifics] bar; never hardcode tokens, passwords, or webhooks",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace, host, or container whose name carries prod or production as a whole word or name segment",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries prod or production as a whole word or name segment; also treat OPNsense firewall config and Ansible Vault-managed secrets on the infrastructure-automation fleet as protected IaC scope",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development across personal public repos (Python, shell, Cloudflare Workers) and infrastructure-as-code for a home network (Ansible: Raspberry Pis, OPNsense, Proxmox, LXC)",
+      "**Trusted repos**: any clone of a github.com/ignaciojimenez repo — all PUBLIC; each repo's own work goes to its own remote only, and secrets/vault contents are never cleared into any of them by visibility alone",
+      "**Org-specific CLIs**: gh, wrangler, ansible-playbook, ansible, ansible-lint, ansible-inventory, ansible-vault, ansible-galaxy, shellcheck",
+      "routine under ansible/ prefix: ansible-playbook, ansible-lint, ansible-inventory, ansible-vault, ansible-galaxy usage within infrastructure-automation's ansible/ directory is routine per its AGENTS.md workflows"
+    ]
+  },
+  "voiceEnabled": true
+}
