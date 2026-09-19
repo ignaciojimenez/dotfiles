@@ -36,6 +36,7 @@ jobs:
             thefiles/.scripts/brew_maintain \
             thefiles/.scripts/ansible-vault-pass \
             thefiles/.scripts/agent-sessions \
+            agent-context/cloud-setup.sh \
             scripts/test-agent-sessions.sh
 
   shell-syntax:

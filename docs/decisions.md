@@ -2,6 +2,11 @@
 
 One-liner record of architecture/strategy calls. Newest first.
 
+## 2026-09-19
+
+- **Build from anywhere runs in two lanes; the laptop only approves.** Fleet writes and signed merges need the Secure-Enclave key and a tap, so they stay on the Mac. Everything else moves off it: **hosted Claude Code cloud sessions** for repos that need only GitHub and Cloudflare, and a **workbench container on cwwk** for LAN work, with no fleet access. Full reasoning and the rejected alternatives: `infrastructure-automation/docs/ARCHITECTURE_DECISIONS.md` → Agent Access.
+- **A cloud session fetches `AGENTS.md` on every start, through a hook the setup script installs, never a copy.** Hosted sessions load only what is in the clone, so `~/.claude/CLAUDE.md` never reaches them. The obvious fix, having the setup script download the file, would go stale without anyone noticing: the setup script's result is snapshotted and reused for about seven days, which is the 2026-09-18 stale-copy failure again. `agent-context/cloud-setup.sh` instead registers a VM-level `SessionStart` hook that fetches the file from this public repo each session, and says so out loud when the fetch fails. It covers hosted sessions only, not phones or web chat, so the "context portability" to-do below stays open.
+
 ## 2026-09-18
 
 - **Agent sessions are reopened from a record the hooks keep, not from anything Claude Code stores about itself.** `~/.claude/sessions/<pid>.json` already lists live sessions with names and directories, but it is undocumented and Claude-only; `SessionStart`/`SessionEnd` are documented, and a tool-neutral record lets another CLI plug in with one adapter. Every rule is backed by a live measurement (`docs/agent-sessions.md`), and two early assumptions did not survive one: `SessionEnd` cannot tell a reboot from a closed window — both are `other` — so the batch is inferred at restore time; and a session killed before its first exchange has no transcript to resume, so restore checks.
