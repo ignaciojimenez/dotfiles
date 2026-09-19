@@ -18,6 +18,7 @@ DRY_RUN=0
 VERBOSE=0
 FORCE=0
 KICKSTART=0
+CONFLICTS=0  # links skipped because something else is in the way
 
 # Import common functions early to ensure they're available
 source "${SCRIPT_DIR}/thefiles/.common_functions"
@@ -154,13 +155,14 @@ link_with_backup() {
                 warn "File exists and differs: $dst"
             fi
             warn "Use --force to overwrite"
+            CONFLICTS=$((CONFLICTS + 1))
             return 0
         elif [[ "$DRY_RUN" -eq 0 ]]; then
             [[ "$backups_made" -eq 0 ]] && create_backup
             # Flatten the path so nested configs can't collide in the backup dir.
             mv "$dst" "${BACKUP_DIR}/$(echo "${dst#"$HOME"/}" | tr '/' '_')"
             info "Backed up: $dst"
-            ((backups_made++))
+            backups_made=$((backups_made + 1))
         else
             info "[DRY-RUN] Would back up: $dst"
         fi
@@ -170,7 +172,7 @@ link_with_backup() {
         mkdir -p "$(dirname "$dst")"
         ln -sfn "$src" "$dst"
         info "Created symlink: $dst -> $src"
-        ((changes_made++))
+        changes_made=$((changes_made + 1))
     else
         info "[DRY-RUN] Would create symlink: $dst -> $src"
     fi
@@ -203,6 +205,7 @@ create_symlinks() {
                         warn "File exists and differs: $dst"
                     fi
                     warn "Use --force to overwrite"
+                    CONFLICTS=$((CONFLICTS + 1))
                     continue
                 fi
                 
@@ -213,14 +216,14 @@ create_symlinks() {
                 
                 mv "$dst" "${BACKUP_DIR}/"
                 info "Backed up: $dst"
-                ((backups_made++))
+                backups_made=$((backups_made + 1))
             fi
             
             # Create symlink
             if [[ "$DRY_RUN" -eq 0 ]]; then
                 ln -sf "$src" "$dst"
                 info "Created symlink: $dst -> $src"
-                ((changes_made++))
+                changes_made=$((changes_made + 1))
             else
                 info "[DRY-RUN] Would create symlink: $dst -> $src"
             fi
@@ -239,7 +242,7 @@ create_symlinks() {
         if [[ "$DRY_RUN" -eq 0 ]]; then
             ln -s "$HOME/Documents/Workspaces" "$HOME/Workspaces"
             info "Created symlink: $HOME/Workspaces -> $HOME/Documents/Workspaces"
-            ((changes_made++))
+            changes_made=$((changes_made + 1))
         else
             info "[DRY-RUN] Would create symlink: $HOME/Workspaces -> $HOME/Documents/Workspaces"
         fi
@@ -286,7 +289,9 @@ create_symlinks() {
     link_with_backup "${SCRIPT_DIR}/agent-sessions/claude" "$HOME/.claude/skills/agent-sessions"
 
     # Summary
-    if [[ "$changes_made" -eq 0 ]]; then
+    if [[ "$CONFLICTS" -gt 0 ]]; then
+        error "$CONFLICTS link(s) skipped: something else is in the way (see warnings above)"
+    elif [[ "$changes_made" -eq 0 ]]; then
         info "No changes needed, all files are up to date"
     else
         info "Created $changes_made new symlinks"
@@ -330,6 +335,14 @@ main() {
         fi
     fi
     
+    # A skipped link means this machine is not wired the way the repo says.
+    # Reporting success here is how ~/.agent-context pointed at a stale iCloud
+    # copy for six weeks with every run green (docs/decisions.md, 2026-09-18).
+    if [[ "$CONFLICTS" -gt 0 ]]; then
+        error "Bootstrap incomplete — rerun with --force to replace (originals are backed up)"
+        exit 1
+    fi
+
     info "Bootstrap completed successfully"
 }
 
