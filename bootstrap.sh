@@ -252,21 +252,26 @@ create_symlinks() {
     # in this repo — git is the only transport that reaches macOS, Linux agent
     # hosts and anything else, so this runs on every platform.
     #
-    #   a. ~/.agent-context -> the repo's agent-context/ directory. Everything
-    #      else points through this, which is what keeps the wiring free of
-    #      hardcoded usernames and clone locations.
-    #   b. One adapter per harness, at each vendor's own global-config path.
-    #      Created unconditionally: a dangling adapter for a harness that isn't
-    #      installed is inert, and pre-wiring means adopting a new harness
-    #      costs nothing.
+    #   a. ~/.agent-context -> the repo's agent-context/ directory: a stable
+    #      path to the canonical file for anything that has to name one without
+    #      knowing where this repo is cloned.
+    #   b. One adapter per harness, at each vendor's own global-config path,
+    #      every one a symlink to the canonical file itself — no per-harness
+    #      file in between. Created unconditionally: a dangling adapter for a
+    #      harness that isn't installed is inert, and pre-wiring means adopting
+    #      a new harness costs nothing.
     local agent_link="$HOME/.agent-context"
     link_with_backup "${SCRIPT_DIR}/agent-context" "$agent_link"
 
     local canonical="${SCRIPT_DIR}/agent-context/AGENTS.md"
 
-    # Claude Code reads CLAUDE.md, not AGENTS.md, so it gets the tracked
-    # importer file (which adds Claude-only config below the @ import).
-    link_with_backup "${SCRIPT_DIR}/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+    # Claude Code is the only harness that still needs the CLAUDE.md filename.
+    # It reads a project's AGENTS.md since 2.1.x, but a *user-level* AGENTS.md
+    # is answered as if it were a project file, so it is dropped in any repo
+    # that carries a CLAUDE.md of its own — the global rules would vanish
+    # exactly where they are least controlled. Verified 2026-09-20; see
+    # docs/decisions.md. The file is the canonical one, not an importer.
+    link_with_backup "$canonical" "$HOME/.claude/CLAUDE.md"
 
     # Harnesses that read AGENTS.md natively at a global path.
     link_with_backup "$canonical" "$HOME/.config/opencode/AGENTS.md"

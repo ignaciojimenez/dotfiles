@@ -55,8 +55,9 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 ├── bootstrap.sh             symlink dotfiles into $HOME (idempotent, --dry-run, --force)
 ├── env_bootstrap.sh         OS-specific provisioning sourced by bootstrap.sh -k
 ├── agent-context/AGENTS.md  canonical personal context for all agent harnesses
-├── .claude/CLAUDE.md        Claude Code importer: @-imports the canonical context
 ├── agent-sessions/claude/   Claude Code plugin: session hooks for agent-sessions
+├── harness/claude/          per-harness config with no cross-harness standard
+│   └── settings.json        tracked whole, linked writable so /config lands in git
 ├── thefiles/                everything that gets symlinked
 │   ├── Brewfile             declarative brew bundle
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper
@@ -105,7 +106,7 @@ relative, so the clone can live anywhere and the running user's name doesn't mat
 ## Validation
 
 ```bash
-./scripts/validate.sh        # 22 checks, zero side effects on your environment
+./scripts/validate.sh        # full local validation, zero side effects on your environment
 ```
 
 ## Documentation

@@ -23,5 +23,6 @@
 *.local
 
 # Claude Code local settings (machine-specific perms; never commit).
-# The tracked .claude/CLAUDE.md wiring file is kept; this stays out.
+# .claude/ holds no tracked file: the global context is linked straight from
+# agent-context/AGENTS.md, and a CLAUDE.md here would mask this repo's AGENTS.md.
 .claude/settings.local.json

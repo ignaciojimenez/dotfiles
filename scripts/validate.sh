@@ -169,17 +169,9 @@ if [[ -f "$AGENT_CTX" ]]; then
   else
     fail "$AGENT_CTX over budget ($chars/$AGENT_CTX_MAX chars) — would truncate in Windsurf"
   fi
-  # The importer must actually import, or Claude Code silently loses everything.
-  if grep -q '^@~/.agent-context/AGENTS.md' .claude/CLAUDE.md 2>/dev/null; then
-    ok ".claude/CLAUDE.md imports the canonical context"
-  else
-    fail ".claude/CLAUDE.md is missing the @~/.agent-context/AGENTS.md import"
-  fi
-
-  # Both checks above pass on a machine where every agent is reading some other
-  # file entirely: one greps the importer's text, the other measures the repo's
-  # copy. Neither asks the only question that matters — does the path the import
-  # names actually land in this repo?
+  # The budget check above passes on a machine where every agent is reading some
+  # other file entirely: it measures the repo's copy and asks nothing about
+  # where each harness's own path lands. That is the only question that matters.
   #
   # It did not, for three months. ~/.agent-context pointed at an iCloud folder
   # holding an untracked August copy; Windsurf had a standalone file from
@@ -198,7 +190,7 @@ if [[ -f "$AGENT_CTX" ]]; then
       "$HOME/.config/devin/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
       "$HOME/.gemini/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
       "$HOME/.codeium/windsurf/memories/global_rules.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.claude/CLAUDE.md:$ROOT/.claude/CLAUDE.md" \
+      "$HOME/.claude/CLAUDE.md:$ROOT/agent-context/AGENTS.md" \
       "$HOME/.claude/settings.json:$ROOT/harness/claude/settings.json"
     do
       link="${adapter%%:*}"; want="${adapter#*:}"
@@ -208,8 +200,10 @@ if [[ -f "$AGENT_CTX" ]]; then
         wiring_ok=0
       fi
     done
-    # settings.json is the one link a harness writes through. If Claude Code
-    # ever replaces it with a regular file, this is where that shows.
+    # Two of these are links a harness writes through: settings.json (/model,
+    # /config) and now CLAUDE.md (/memory and the # shortcut, which edit the
+    # canonical file in place). If Claude Code ever replaces either with a
+    # regular file, this is where that shows.
     [[ "$wiring_ok" -eq 1 ]] && ok "all 7 agent adapters resolve into this repo"
   fi
 else

@@ -57,7 +57,7 @@ indirection, so no username or clone location is ever hardcoded:
 
 | Path | Harness | Status |
 |---|---|---|
-| `~/.claude/CLAUDE.md` → `.claude/CLAUDE.md` | Claude Code (also read by OpenCode + Devin CLI) | **confirmed working** |
+| `~/.claude/CLAUDE.md` | Claude Code (also read by OpenCode + Devin CLI) | **confirmed working** |
 | `~/.config/opencode/AGENTS.md` | OpenCode | wired, unverified |
 | `~/.config/devin/AGENTS.md` | Devin CLI | wired, unverified |
 | `~/.gemini/AGENTS.md` | Gemini CLI (needs `context.fileName`, see README) | wired, unverified |
@@ -68,8 +68,30 @@ that harness actually loads it. Say so rather than claiming coverage — the
 previous version of this setup asserted five harnesses read the file when
 only one did.
 
+Every adapter is a symlink to the canonical file itself — no per-harness
+importer in between. `~/.claude/CLAUDE.md` keeps the Claude-only *filename*
+for one verified reason: Claude Code reads a project's `AGENTS.md` since
+2.1.x, but a **user-level** `AGENTS.md` is loaded as if it were a project
+file, so it is dropped in any repo that carries a `CLAUDE.md` of its own.
+The global rules would vanish exactly where they are least controlled.
+Evidence: `docs/decisions.md` (2026-09-20).
+
+The same mechanism is why **this repo must not grow a `CLAUDE.md` at its
+root, or in `.claude/`**. One there is read as this project's instruction
+file, and Claude Code then stops loading *this* file entirely — silently.
+If Claude-specific guidance is ever needed, put it in a section here.
+
 `~/.gemini/GEMINI.md` is **deliberately not linked**: Antigravity writes to
 it, and a symlink would let it overwrite the tracked file.
+
+### Harness settings
+
+Settings have no cross-harness standard, so each harness gets its own tracked
+file under `harness/<name>/`. `harness/claude/settings.json` holds model,
+effort, plugins and auto-mode rules; `bootstrap.sh` links it to
+`~/.claude/settings.json`, writable on purpose so a `/model` or `/config`
+change lands in the working tree instead of drifting untracked. Check
+`git diff harness/` after a session that changed settings.
 
 ### Agent sessions
 
