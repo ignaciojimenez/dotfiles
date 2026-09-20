@@ -2,7 +2,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "sonnet",
   "enabledPlugins": {
     "commit-commands@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
@@ -65,5 +65,6 @@
       "routine under ansible/ prefix: ansible-playbook, ansible-lint, ansible-inventory, ansible-vault, ansible-galaxy usage within infrastructure-automation's ansible/ directory is routine per its AGENTS.md workflows"
     ]
   },
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "switchModelsOnFlag": false
 }
