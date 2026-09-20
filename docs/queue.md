@@ -40,9 +40,9 @@ cheap.
 
 ## The label contract
 
-Three groups, each answering a different question. Groups are mutually exclusive
+Four groups, each answering a different question. Groups are mutually exclusive
 in Linear, which is the point: an issue has one owner, one current blocker, one
-kind.
+kind, one model tier.
 
 ### `agent/*` — who may close it
 
@@ -83,6 +83,32 @@ can be urgent. It matters most to an executor, because **a fix has an obvious
 acceptance test — the broken thing works — and a new capability does not.**
 `risk` is the one that is easy to miss: works today, known weakness or
 unverified control.
+
+### `model/*` — which model tier this needs
+
+A manual router, not an automatic one: the label names a tier, an agent reads
+it and checks its own active model before starting — it does not switch
+anything itself. Tiers are named by capability, not by model, because models
+turn over and a label baked to one generation goes stale the day it ships.
+
+| Tier | Means | Current model |
+|---|---|---|
+| `model/quick` | mechanical, well-specified, low ambiguity | Haiku 4.5 |
+| `model/standard` | typical engineering work, one clear acceptance test — most of the queue | Sonnet 5 |
+| `model/deep` | architecture, ambiguous trade-offs, security-critical design — expensive to get wrong | Opus 5 |
+| `model/creative` | tone, narrative or presentation-facing work, off the escalation ladder | Fable 5.1 — provisional, revisit as its role settles |
+| *(none)* | default tier | `model/standard` |
+
+The "current model" column is the one part of this contract that is expected
+to go stale — check it against whatever the harness's or this doc's most
+recent edit date says before trusting it blindly.
+
+🔴 **No heuristic assigns this today.** Backtesting `TriageSource`'s
+case-sensitive whole-token match against all 77 PER issues is the bar
+(2026-09-19, see `todo-harness/docs/decisions.md`) — a plausible-looking rule
+for estimate → tier has not cleared it, so the tier is applied by whoever
+triages the issue (Ignacio, or an agent asked "which model for this?"), not
+guessed at automatically. See `todo-harness` for the tracked follow-up.
 
 ### Size
 
@@ -153,13 +179,16 @@ up right now", exclude `needs/decision` and `needs/hands`; add
 ## Working an item
 
 1. Take it from `Todo`; move it to `In Progress`.
-2. **Read the git pointer first.** The issue is deliberately not
+2. **Check `model/*`.** If it names a tier the active model doesn't match,
+   say so and ask before continuing — do not silently work it on the wrong
+   model, and do not silently switch either.
+3. **Read the git pointer first.** The issue is deliberately not
    self-contained.
-3. Work on a branch.
-4. **Verify by forcing the condition.** A check that stopped complaining is
+4. Work on a branch.
+5. **Verify by forcing the condition.** A check that stopped complaining is
    not a check that works.
-5. Write the reasoning to the repo, not to Linear.
-6. Close it — or hand it back, stating plainly what was not verified.
+6. Write the reasoning to the repo, not to Linear.
+7. Close it — or hand it back, stating plainly what was not verified.
 
 ## Finishing something
 
@@ -254,3 +283,7 @@ Recorded so no agent assumes otherwise:
 - Scanner intake stays **poll-and-reconcile, never push**. An event cannot
   retract, and a finding that outlives its condition is the exact failure this
   system exists to prevent.
+- **Nothing suggests `model/*` on intake.** Every tier is applied by hand
+  today (see the label contract above). Tracked as a `todo-harness` issue;
+  parked rather than guessed at because a rule for estimate/kind → tier has
+  not cleared the evidence bar the project already holds classification to.
