@@ -36,7 +36,20 @@ they silently won't load in some contexts.
 `bootstrap.sh::get_dotfiles` lists exactly which files in `thefiles/`
 get symlinked into `$HOME`. **A new dotfile in `thefiles/` will not
 be linked unless it's added there.** Notably: `.gitconfig`,
-`.ansible_preauth`, `.starship.toml` are all in the whitelist.
+`.gitconfig.personal`, `.ansible_preauth`, `.starship.toml` are all in the
+whitelist. `.gitconfig.personal` has to be linked, not just tracked: git
+resolves include paths against the symlink in `~`, never its target.
+
+### Host profiles
+
+`bootstrap.sh --profile personal|work` (default `personal`, persisted to
+`~/.config/dotfiles/profile`) is the one switch between a personal machine
+and an employer-managed one. It lives only in `bootstrap.sh` and
+`env_bootstrap.sh` (as `$DOTFILES_PROFILE`); the shell files never branch on
+it. Anything that would misbehave on a managed Mac — a custom tap, casks,
+network tools, the personal Claude settings — is gated on it rather than
+removed. What it gates, and the checks still owed on a real work laptop:
+`docs/work-host.md`.
 
 Some symlinks are handled *outside* `get_dotfiles`, in dedicated blocks at
 the end of `create_symlinks` (they aren't flat dotfiles in `thefiles/`).
@@ -61,6 +74,7 @@ indirection, so no username or clone location is ever hardcoded:
 | `~/.config/opencode/AGENTS.md` | OpenCode | wired, unverified |
 | `~/.config/devin/AGENTS.md` | Devin CLI | wired, unverified |
 | `~/.gemini/AGENTS.md` | Gemini CLI (needs `context.fileName`, see README) | wired, unverified |
+| `~/.factory/AGENTS.md` | Factory Droid | wired, unverified — `docs/work-host.md` check 2 |
 | `~/.codeium/windsurf/memories/global_rules.md` | Devin Desktop / Windsurf | wired, unverified |
 
 "Wired, unverified" means the symlink is created but nobody has confirmed
@@ -91,7 +105,8 @@ file under `harness/<name>/`. `harness/claude/settings.json` holds model,
 effort, plugins and auto-mode rules; `bootstrap.sh` links it to
 `~/.claude/settings.json`, writable on purpose so a `/model` or `/config`
 change lands in the working tree instead of drifting untracked. Check
-`git diff harness/` after a session that changed settings.
+`git diff harness/` after a session that changed settings. The `work` profile
+does not link it: its `autoMode.environment` describes the personal estate.
 
 ### Agent sessions
 
@@ -117,12 +132,14 @@ installs them through the system package manager.
 ./bootstrap.sh --dry-run       # preview symlink actions
 ./bootstrap.sh                 # refresh symlinks
 ./bootstrap.sh --kickstart     # also source env_bootstrap.sh
-                               # (macOS: brew + Brewfile + defaults; Linux: no-op)
+                               # (macOS: brew + Brewfile(s) + defaults; Linux: no-op)
+./bootstrap.sh --profile work  # employer-managed host; remembered (docs/work-host.md)
 
 ./scripts/validate.sh          # full local validation, no side effects
 ./scripts/validate.sh --quick  # skip Brewfile check
 
-brew bundle --file=thefiles/Brewfile   # install/refresh packages
+brew bundle --file=thefiles/Brewfile            # portable packages, every profile
+brew bundle --file=thefiles/Brewfile.personal   # personal profile only
 ```
 
 ## Conventions

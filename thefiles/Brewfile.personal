@@ -1,0 +1,50 @@
+# Personal-profile packages, installed on top of Brewfile. Kept apart because
+# each one is what a managed work laptop refuses or flags: a custom tap and
+# casks (curated there), and network tools that endpoint security reads as
+# reconnaissance or tunnelling. See docs/work-host.md.
+#
+#     brew bundle --file=thefiles/Brewfile.personal
+
+# ─── Custom taps ─────────────────────────────────────────────────────────────
+tap "ignaciojimenez/tap"
+brew "ignaciojimenez/tap/touchid-agent"   # macOS-only; skipped by brew bundle on Linux
+
+# Newer than system openssh, for touchid-agent. Not portable: it rejects
+# Apple's `UseKeychain` option, which company-issued ~/.ssh/config often sets.
+brew "openssh"
+
+# ─── Homelab: Ansible fleet ──────────────────────────────────────────────────
+brew "ansible"
+brew "ansible-lint"
+brew "yamllint"
+
+# ─── Network tools ───────────────────────────────────────────────────────────
+brew "iperf3"
+brew "mtr"
+brew "nmap"
+brew "netaddr"
+brew "socat"
+brew "sshpass"
+
+# ─── Cloudflare ──────────────────────────────────────────────────────────────
+# wrangler is intentionally NOT installed via brew: the canonical
+# distribution is the npm package (`npm i -g wrangler`), which is what
+# Cloudflare publishes and updates first. The Homebrew formula
+# (`cloudflare-wrangler`) conflicts with the npm symlink at
+# /usr/local/bin/wrangler if both are present.
+brew "cloudflared"           # tunnels
+
+# ─── GUI apps (casks) ────────────────────────────────────────────────────────
+cask "gpg-suite"
+cask "raspberry-pi-imager"
+cask "secretive"
+cask "sublime-text"
+cask "warp"
+
+# Modern additions worth considering — uncomment to install:
+# cask "iterm2"               # alternative to warp
+# cask "rectangle"            # window snapping
+# cask "raycast"              # spotlight replacement
+# cask "1password"
+# cask "1password-cli"
+# cask "visual-studio-code"

@@ -19,6 +19,14 @@ VERBOSE=0
 FORCE=0
 KICKSTART=0
 CONFLICTS=0  # links skipped because something else is in the way
+IDENTITY_MISSING=0
+
+# Host profile: personal (default) or work. Persisted on first --profile so a
+# plain re-run can't quietly relink a work laptop as a personal one.
+# What each profile changes: docs/work-host.md.
+PROFILE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/profile"
+PROFILE_ARG=""
+DOTFILES_PROFILE=""
 
 # Import common functions early to ensure they're available
 source "${SCRIPT_DIR}/thefiles/.common_functions"
@@ -35,6 +43,7 @@ Usage: $(basename "$0") [OPTIONS]
 
 Options:
     -k, --kickstart         Install environment packages
+    -p, --profile NAME      personal (default) or work; remembered for re-runs
     -d, --dry-run          Show what would be done
     -f, --force            Force overwrite of existing files
     -v, --verbose          Verbose output
@@ -53,6 +62,11 @@ parse_args() {
             -k|--kickstart)
                 KICKSTART=1
                 shift
+                ;;
+            -p|--profile)
+                [[ $# -ge 2 ]] || { error "--profile needs a value: personal or work"; usage; }
+                PROFILE_ARG="$2"
+                shift 2
                 ;;
             -d|--dry-run)
                 DRY_RUN=1
@@ -98,7 +112,45 @@ warn_missing_zsh() {
 
 # All dotfiles symlinked into $HOME. No shell branching — zsh-only.
 get_dotfiles() {
-    echo ".zshrc .zprofile .zsh_options .zsh_keys .profile .shell_options .shell_tools .aliases .exports .common_functions .security .scripts .gitconfig .ansible_preauth .starship.toml"
+    echo ".zshrc .zprofile .zsh_options .zsh_keys .profile .shell_options .shell_tools .aliases .exports .common_functions .security .scripts .gitconfig .gitconfig.personal .ansible_preauth .starship.toml"
+}
+
+# --profile wins, then the remembered one, then personal. Only a real run
+# persists it: a dry-run must leave no trace.
+resolve_profile() {
+    local saved=""
+    [[ -f "$PROFILE_FILE" ]] && saved="$(tr -d '[:space:]' < "$PROFILE_FILE")"
+    DOTFILES_PROFILE="${PROFILE_ARG:-${saved:-personal}}"
+
+    case "$DOTFILES_PROFILE" in
+        personal|work) ;;
+        *) error "Unknown profile '$DOTFILES_PROFILE': use personal or work (saved choice: $PROFILE_FILE)"; exit 1 ;;
+    esac
+
+    if [[ -n "$PROFILE_ARG" && "$PROFILE_ARG" != "$saved" ]]; then
+        if [[ "$DRY_RUN" -eq 0 ]]; then
+            mkdir -p "$(dirname "$PROFILE_FILE")"
+            echo "$DOTFILES_PROFILE" > "$PROFILE_FILE"
+            info "Saved profile '$DOTFILES_PROFILE' to $PROFILE_FILE"
+        else
+            info "[DRY-RUN] Would save profile '$DOTFILES_PROFILE' to $PROFILE_FILE"
+        fi
+    fi
+    export DOTFILES_PROFILE
+}
+
+# A work host must say who commits there. Without a host email the default
+# identity is the personal one, so work commits would carry it — silently.
+# Fails the run rather than warning, for the same reason a skipped link does.
+check_work_identity() {
+    [[ "$DOTFILES_PROFILE" == "work" ]] || return 0
+    command -v git >/dev/null 2>&1 || return 0
+    if ! git config --file "$HOME/.gitconfig.local" user.email >/dev/null 2>&1; then
+        error "Work profile: no user.email in ~/.gitconfig.local, so commits here"
+        error "would use the personal address. Set it, then re-run:"
+        error "  git config --file ~/.gitconfig.local user.email <you@company>"
+        IDENTITY_MISSING=1
+    fi
 }
 
 # Compare files or symlinks
@@ -204,6 +256,11 @@ create_symlinks() {
                     else
                         warn "File exists and differs: $dst"
                     fi
+                    # A company-issued gitconfig (credential helper, proxy,
+                    # email) belongs in the host layer, not in the backup dir.
+                    if [[ "$file" == ".gitconfig" && ! -L "$dst" && ! -e "$HOME/.gitconfig.local" ]]; then
+                        warn "To keep its settings as this host's layer: mv ~/.gitconfig ~/.gitconfig.local"
+                    fi
                     warn "Use --force to overwrite"
                     CONFLICTS=$((CONFLICTS + 1))
                     continue
@@ -277,6 +334,8 @@ create_symlinks() {
     link_with_backup "$canonical" "$HOME/.config/opencode/AGENTS.md"
     link_with_backup "$canonical" "$HOME/.config/devin/AGENTS.md"
     link_with_backup "$canonical" "$HOME/.gemini/AGENTS.md"
+    # Factory Droid also looks in ~/.agents/ and ~/.agent/; one path is enough.
+    link_with_backup "$canonical" "$HOME/.factory/AGENTS.md"
 
     # Devin Desktop (Windsurf IDE) has its own filename and a 6,000-char cap
     # on this file — scripts/validate.sh enforces that budget on the canonical.
@@ -298,7 +357,15 @@ create_symlinks() {
     # harness/<name>/. The link is writable on purpose: a /model or /config
     # change lands in the working tree and shows up in `git status`, instead of
     # drifting in an untracked copy.
-    link_with_backup "${SCRIPT_DIR}/harness/claude/settings.json" "$HOME/.claude/settings.json"
+    #
+    # Personal profile only: its autoMode.environment describes the personal
+    # estate (public repos, home fleet) and would misinform a work session's
+    # safety classifier. A work host keeps whatever Claude Code or IT writes.
+    if [[ "$DOTFILES_PROFILE" == "personal" ]]; then
+        link_with_backup "${SCRIPT_DIR}/harness/claude/settings.json" "$HOME/.claude/settings.json"
+    else
+        info "Profile $DOTFILES_PROFILE: leaving ~/.claude/settings.json alone"
+    fi
 
     # Summary
     if [[ "$CONFLICTS" -gt 0 ]]; then
@@ -332,7 +399,11 @@ main() {
     fi
     info "Detected OS: $os_type"
 
+    resolve_profile
+    info "Profile: $DOTFILES_PROFILE"
+
     warn_missing_zsh
+    check_work_identity
 
     create_symlinks "$os_type"
     
@@ -352,6 +423,10 @@ main() {
     # copy for six weeks with every run green (docs/decisions.md, 2026-09-18).
     if [[ "$CONFLICTS" -gt 0 ]]; then
         error "Bootstrap incomplete — rerun with --force to replace (originals are backed up)"
+        exit 1
+    fi
+    if [[ "$IDENTITY_MISSING" -eq 1 ]]; then
+        error "Bootstrap incomplete — set the work git identity (see above)"
         exit 1
     fi
 

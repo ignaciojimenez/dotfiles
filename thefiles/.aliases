@@ -89,11 +89,10 @@ macos(){
     echo ".aliases: brew_maintain not found" >&2
   fi
 
-  # alias to pi utilities
+  # alias to pi utilities. Silent when absent: rpi-provisioner is a separate
+  # repo that only some hosts clone, unlike the scripts this repo ships.
   if [ -f "$HOME/Documents/Workspaces/rpi-provisioner/provision_pi" ]; then
     alias provision_rpi='$HOME/Documents/Workspaces/rpi-provisioner/provision_pi'
-  else
-    echo ".aliases: provision_rpi not found" >&2
   fi
 
   # Function for python

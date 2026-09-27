@@ -1,7 +1,14 @@
+# Identity is layered; the last include that sets a key wins.
+#   1. ~/.gitconfig.personal — default identity; a personal host needs nothing else
+#   2. ~/.gitconfig.local    — untracked host layer: a work email, and whatever
+#                              IT shipped in its own ~/.gitconfig (docs/work-host.md)
+#   3. ~/.gitconfig.personal — again, for repos with a remote under my GitHub
+#                              account, so a work host never commits to them as work
+# Include paths resolve against the symlink in ~, not its target — git does not
+# follow it — so bootstrap.sh links .gitconfig.personal into $HOME as well.
 [user]
 	signingkey = ~/.ssh/touchid-agent-sign.pub
 	name = Ignacio Jimenez
-	email = i.jimenezpi@gmail.com
 [commit]
 	# Signing is opt-in (key is touch-required). Use `git cs` / `git ms`
 	# / `git ts` at meaningful moments — see docs/decisions.md.
@@ -20,3 +27,11 @@
 	version = HTTP/1.1
 [core]
 	compression = 9
+[include]
+	path = ~/.gitconfig.personal
+[include]
+	path = ~/.gitconfig.local
+[includeIf "hasconfig:remote.*.url:git@github.com:ignaciojimenez/**"]
+	path = ~/.gitconfig.personal
+[includeIf "hasconfig:remote.*.url:https://github.com/ignaciojimenez/**"]
+	path = ~/.gitconfig.personal

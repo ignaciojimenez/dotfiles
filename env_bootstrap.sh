@@ -2,11 +2,16 @@
 # Environment bootstrap — sourced by bootstrap.sh -k.
 # Usage: source env_bootstrap.sh <macos|unix>
 #
-# macos: Homebrew + Brewfile + macOS defaults + scheduled brew_maintain
+# macos: Homebrew + Brewfile(s) + macOS defaults + scheduled brew_maintain
 # unix:  no-op for now (step 3 of docs/improvement-plan.md will fill this in
 #        with a Linux-on-zsh experience: gpg-agent socket, Linux package install)
+#
+# DOTFILES_PROFILE (set by bootstrap.sh; personal if unset) picks what a
+# managed work laptop must not get: Brewfile.personal (custom tap, casks,
+# network tools) and the Notification Center unload. See docs/work-host.md.
 
 programname=$0
+profile="${DOTFILES_PROFILE:-personal}"
 
 # ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -36,20 +41,26 @@ install_homebrew() {
 }
 
 install_packages() {
-  local script_dir
+  local script_dir brewfile
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  local brewfile="$script_dir/thefiles/Brewfile"
-  if [[ ! -f "$brewfile" ]]; then
-    echo "==> No Brewfile at $brewfile — skipping" >&2
-    return 0
-  fi
-  echo "==> Installing/refreshing packages from $brewfile"
-  brew bundle --file="$brewfile"
+  local brewfiles=("$script_dir/thefiles/Brewfile")
+  [[ "$profile" == "personal" ]] && brewfiles+=("$script_dir/thefiles/Brewfile.personal")
+  for brewfile in "${brewfiles[@]}"; do
+    if [[ ! -f "$brewfile" ]]; then
+      echo "==> No Brewfile at $brewfile — skipping" >&2
+      continue
+    fi
+    echo "==> Installing/refreshing packages from $brewfile"
+    brew bundle --file="$brewfile"
+  done
 }
 
 deploy_macos_usability_settings() {
-  # Disable Notification Center and remove the menu bar icon
-  launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist 2> /dev/null
+  # Disable Notification Center and remove the menu bar icon. Not on a work
+  # laptop: device-management and compliance prompts arrive through it.
+  if [[ "$profile" == "personal" ]]; then
+    launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist 2> /dev/null
+  fi
 
   # Finder: show all filename extensions
   defaults write NSGlobalDomain AppleShowAllExtensions -bool true
@@ -171,7 +182,7 @@ unix() {
 # ─── Main ────────────────────────────────────────────────────────────────────
 
 case "${1:-}" in
-  macos) echo "==> Setting up macOS environment"; macos ;;
+  macos) echo "==> Setting up macOS environment ($profile profile)"; macos ;;
   unix)  echo "==> Setting up unix environment";  unix ;;
   *)     usage ;;
 esac

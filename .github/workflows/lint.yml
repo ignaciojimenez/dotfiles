@@ -83,8 +83,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Validate Brewfile parses
-        run: brew bundle list --file=thefiles/Brewfile
+      - name: Validate Brewfiles parse
+        run: |
+          brew bundle list --all --file=thefiles/Brewfile
+          brew bundle list --all --file=thefiles/Brewfile.personal
 
   bootstrap-dry-run:
     runs-on: macos-latest
@@ -103,5 +105,18 @@ jobs:
           echo '{}' > "$RUNNER_TEMP/conflict/.claude/settings.json"
           if HOME="$RUNNER_TEMP/conflict" ./bootstrap.sh --dry-run; then
             echo "::error::a conflicting file did not fail the bootstrap"
+            exit 1
+          fi
+      # Work profile, forced both ways: a host email passes, none must fail.
+      - name: Symlink dry-run, work profile
+        run: |
+          mkdir "$RUNNER_TEMP/work"
+          printf '[user]\n\temail = ci@example.com\n' > "$RUNNER_TEMP/work/.gitconfig.local"
+          HOME="$RUNNER_TEMP/work" ./bootstrap.sh --dry-run --profile work
+      - name: Symlink dry-run, work profile without identity must fail
+        run: |
+          mkdir "$RUNNER_TEMP/work-noid"
+          if HOME="$RUNNER_TEMP/work-noid" ./bootstrap.sh --dry-run --profile work; then
+            echo "::error::a work host with no git identity did not fail the bootstrap"
             exit 1
           fi

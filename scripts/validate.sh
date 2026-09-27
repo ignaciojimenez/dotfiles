@@ -22,6 +22,11 @@ cd "$ROOT"
 QUICK=0
 [[ "${1:-}" == "--quick" ]] && QUICK=1
 
+# This machine's bootstrap profile, resolved the way bootstrap.sh does it.
+PROFILE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/profile"
+PROFILE="$( [[ -f "$PROFILE_FILE" ]] && tr -d '[:space:]' < "$PROFILE_FILE" )"
+PROFILE="${PROFILE:-personal}"
+
 GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 
 PASS=0
@@ -154,6 +159,33 @@ else
   echo "$out" | sed 's/^/    /'
 fi
 
+# The work profile, forced both ways in a throwaway $HOME: with a host email
+# it must plan the Droid adapter and skip the personal Claude settings; without
+# one it must fail. Asserting only the passing run would prove nothing.
+WORK_HOME="$(mktemp -d -t dotfiles-work.XXXXXX)"
+printf '[user]\n\temail = validate@example.com\n' > "$WORK_HOME/.gitconfig.local"
+if out=$(HOME="$WORK_HOME" XDG_CONFIG_HOME= ./bootstrap.sh --dry-run --profile work 2>&1); then
+  if ! grep -q 'Would create symlink: .*/\.factory/AGENTS\.md' <<< "$out"; then
+    fail "work profile: Droid adapter not planned"
+  elif grep -q 'Would create symlink: .*/\.claude/settings\.json' <<< "$out"; then
+    fail "work profile: would link the personal Claude settings"
+  elif [[ -e "$WORK_HOME/.config/dotfiles/profile" ]]; then
+    fail "work profile: --dry-run persisted the profile"
+  else
+    ok "work profile: plans Droid adapter, skips Claude settings, dry-run leaves no trace"
+  fi
+else
+  fail "work profile with a host email exited non-zero"
+  echo "$out" | sed 's/^/    /'
+fi
+rm -f "$WORK_HOME/.gitconfig.local"
+if HOME="$WORK_HOME" XDG_CONFIG_HOME= ./bootstrap.sh --dry-run --profile work >/dev/null 2>&1; then
+  fail "work profile without a host email did not fail"
+else
+  ok "work profile without a host email fails"
+fi
+rm -rf "$WORK_HOME"
+
 # ─── 6. Agent context budget ─────────────────────────────────────────────────
 # The canonical file is symlinked into Devin Desktop (Windsurf) at
 # ~/.codeium/windsurf/memories/global_rules.md, which caps global rules at
@@ -184,15 +216,19 @@ if [[ -f "$AGENT_CTX" ]]; then
     skip "agent context wiring (bootstrap has not run on this machine)"
   else
     wiring_ok=1
-    for adapter in \
-      "$HOME/.agent-context:$ROOT/agent-context" \
-      "$HOME/.config/opencode/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.config/devin/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.gemini/AGENTS.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.codeium/windsurf/memories/global_rules.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.claude/CLAUDE.md:$ROOT/agent-context/AGENTS.md" \
-      "$HOME/.claude/settings.json:$ROOT/harness/claude/settings.json"
-    do
+    adapters=(
+      "$HOME/.agent-context:$ROOT/agent-context"
+      "$HOME/.config/opencode/AGENTS.md:$ROOT/agent-context/AGENTS.md"
+      "$HOME/.config/devin/AGENTS.md:$ROOT/agent-context/AGENTS.md"
+      "$HOME/.gemini/AGENTS.md:$ROOT/agent-context/AGENTS.md"
+      "$HOME/.factory/AGENTS.md:$ROOT/agent-context/AGENTS.md"
+      "$HOME/.codeium/windsurf/memories/global_rules.md:$ROOT/agent-context/AGENTS.md"
+      "$HOME/.claude/CLAUDE.md:$ROOT/agent-context/AGENTS.md"
+    )
+    # A work host deliberately does not link the personal Claude settings.
+    [[ "$PROFILE" == "personal" ]] &&
+      adapters+=("$HOME/.claude/settings.json:$ROOT/harness/claude/settings.json")
+    for adapter in "${adapters[@]}"; do
       link="${adapter%%:*}"; want="${adapter#*:}"
       got="$(readlink -f "$link" 2>/dev/null || true)"
       if [[ "$got" != "$want" ]]; then
@@ -204,7 +240,7 @@ if [[ -f "$AGENT_CTX" ]]; then
     # /config) and now CLAUDE.md (/memory and the # shortcut, which edit the
     # canonical file in place). If Claude Code ever replaces either with a
     # regular file, this is where that shows.
-    [[ "$wiring_ok" -eq 1 ]] && ok "all 7 agent adapters resolve into this repo"
+    [[ "$wiring_ok" -eq 1 ]] && ok "all ${#adapters[@]} agent adapters resolve into this repo ($PROFILE profile)"
   fi
 else
   fail "$AGENT_CTX not found"
@@ -243,32 +279,36 @@ else
   fi
 fi
 
-# ─── 8. Brewfile parses + check ──────────────────────────────────────────────
+# ─── 8. Brewfiles parse + check ──────────────────────────────────────────────
+# Both files must parse on every host; only this profile's set must be installed.
 if [[ "$QUICK" -eq 0 ]]; then
-  section "Brewfile (read-only)"
-  if [[ -f thefiles/Brewfile ]]; then
-    if command -v brew >/dev/null; then
-      if brew bundle list --file=thefiles/Brewfile >/dev/null 2>&1; then
-        ok "parses"
-      else
-        fail "parse failed"
+  section "Brewfiles (read-only)"
+  if command -v brew >/dev/null; then
+    for bf in thefiles/Brewfile thefiles/Brewfile.personal; do
+      if [[ ! -f "$bf" ]]; then
+        fail "$bf missing"
+        continue
       fi
+      if brew bundle list --all --file="$bf" >/dev/null 2>&1; then
+        ok "$bf parses"
+      else
+        fail "$bf parse failed"
+      fi
+      [[ "$bf" == *.personal && "$PROFILE" != "personal" ]] && continue
       # `check` is read-only — reports missing items; doesn't install.
-      missing=$(brew bundle check --verbose --file=thefiles/Brewfile 2>&1 | grep -c '^→' || true)
+      missing=$(brew bundle check --verbose --file="$bf" 2>&1 | grep -c '^→' || true)
       if [[ "$missing" -eq 0 ]]; then
-        ok "all dependencies satisfied"
+        ok "$bf: all dependencies satisfied"
       else
-        skip "$missing item(s) need install (run \`brew bundle --file=thefiles/Brewfile\`)"
+        skip "$bf: $missing item(s) need install (run \`brew bundle --file=$bf\`)"
       fi
-    else
-      skip "brew not installed"
-    fi
+    done
   else
-    skip "thefiles/Brewfile not present"
+    skip "brew not installed"
   fi
 else
-  section "Brewfile (skipped — --quick)"
-  skip "use without --quick to check Brewfile"
+  section "Brewfiles (skipped — --quick)"
+  skip "use without --quick to check Brewfiles"
 fi
 
 # ─── Summary ─────────────────────────────────────────────────────────────────

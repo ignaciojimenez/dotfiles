@@ -1,0 +1,4 @@
+# Personal identity. .gitconfig includes it as the default, and again for any
+# repo whose remote is under github.com/ignaciojimenez — see the note there.
+[user]
+	email = i.jimenezpi@gmail.com

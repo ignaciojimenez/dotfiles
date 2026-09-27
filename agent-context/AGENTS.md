@@ -1,7 +1,7 @@
 # AGENTS.md — Ignacio Jiménez
 
 Portable, agent-neutral context: who I am and how I work. Applies to every
-project on this machine, in every agent harness.
+project, on every machine I use — personal or work — in every agent harness.
 
 Canonical source: `dotfiles/agent-context/AGENTS.md`. `bootstrap.sh` links it
 into each harness's global-config path — the copies under `~` are symlinks
@@ -9,6 +9,8 @@ back here, so edit this file, never those.
 
 Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
 `scripts/validate.sh`). No secrets — this repo is public.
+
+**A repo's own instructions and conventions override this file.**
 
 ## Who I am
 
@@ -34,23 +36,6 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
 - What loses me: opinions stated as facts, broad generalizations,
   self-centeredness, recurring victimism, lack of situational awareness.
 
-## Task queue (Linear, team `PER`)
-
-- **Linear is the queue; git is the reasoning.** An issue is one deliverable
-  with an acceptance test; its steps go inside it. The write-up stays in
-  the repo's `docs/`.
-- **`Todo` is the queue** and the whole of it. **No project = untriaged**,
-  whatever its status — that is the intake state. `Backlog` *with* a project
-  is shelved and not read.
-- `agent/*` is machine-owned: auto-closes only on repeated clear sweeps, never
-  notifies. `needs/*` is what blocks it **now**, `kind/*` what sort of work it
-  is, size is the estimate field. **No `agent/*` label means it is
-  mine: an unattended sweep never closes it; a session I asked to do the work
-  may, once it has verified. Unsure — comment and use `In Review`.**
-- Closing is subject to the honesty rule below: force the condition.
-
-Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
-
 ## Accuracy & honesty (hard rule)
 
 - **Never guess about technical facts.** If a URL, API, config format,
@@ -66,55 +51,60 @@ Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
   from "I reasoned this should hold". If proving it needs a command you can't
   run, say so and hand me the exact command.
 
-## Environment & defaults
+## Environment & code
 
-- **macOS host** — shell commands must be macOS/BSD compatible. Timezone
-  Europe/Amsterdam. Some hosts are Linux (homelab, agent VMs), so prefer
-  POSIX where it costs nothing.
-- Default stack: **Cloudflare free tier** (Workers, Pages, KV, R2) +
-  **GitHub**. Usual pattern: push to GitHub → auto-deploy via Cloudflare.
-- Use `gh` and `wrangler` for everything — no manual UI steps.
-- Infrastructure is Ansible-managed, with Slack alerting for monitoring and
-  heartbeats.
-- Prefer simple, recognized free-tier providers. Minimal dependencies — don't
-  reinvent the wheel, don't pull heavy frameworks for small problems.
-- GitHub handle `ignaciojimenez`; repos live in `~/Documents/Workspaces/`.
-
-## Code & projects
-
+- **macOS host** — commands must be macOS/BSD compatible. Timezone
+  Europe/Amsterdam. Some hosts are Linux, so prefer POSIX where it's free.
+- Minimal dependencies — don't reinvent the wheel, don't pull heavy
+  frameworks for small problems.
 - Default language **Python**, but adapt to what suits the project.
-- Structure scales to size: a single script for small, `src/` for larger.
-- Test with **pytest**; pragmatic coverage. TDD where it adds comfort without
-  becoming overkill.
-- Repos are **public portfolio** — elegant, well-structured, opinionated,
-  pragmatic. Personal work, so no contribution workflows needed, but
-  presentation quality always matters. Assume public; act accordingly.
+  Structure scales to size: a single script for small, `src/` for larger.
+- Test with **pytest**; pragmatic coverage. TDD where it adds comfort
+  without becoming overkill.
+- Presentation quality always matters: elegant, well-structured,
+  opinionated, pragmatic.
 
 ## Git discipline
 
 - Simple feature branches. Only commit work from the current conversation
   scope; never stage out-of-scope files.
-- Never hardcode secrets — env vars or secret managers.
-- Signing is opt-in attestation, not a default. `commit.gpgSign=false`
-  globally; the signing key (`touchid-agent-sign`) is touch-required, so each
-  `-S` is one Touch ID prompt meaning "human present, human approved". Don't
-  add `-S` to routine commits — sign at meaningful moments only: merges to
-  main (`git ms`), release tags (`git ts`).
+- Signing is opt-in attestation, not a default: each `-S` is one Touch ID
+  prompt meaning "human present, human approved". Don't sign routine
+  commits — only merges to main (`git ms`) and release tags (`git ts`).
 
 ## Security (my profession — flag things)
 
 - Security-first across architecture, config and code. Never hardcode
-  secrets. Assume every repo is public.
+  secrets — env vars or secret managers.
 - Secure defaults everywhere: repo settings, cloud config, access controls,
   permissions. Least privilege when in doubt.
 - Flag security trade-offs explicitly; don't silently accept weak configs.
 
 ## Documentation
 
-- README: minimal — project intent and how to use it, nothing more.
-- Detailed docs in `docs/`, linked from the README.
+- README: minimal — intent and how to use it. Detail in `docs/`, linked.
 - Maintain `docs/decisions.md`: one-liner architecture/strategy calls,
   newest first.
-- Tone: concise, action-driven.
-- Keep the tree tidy — clean up files and docs that are no longer needed
-  rather than leaving them around.
+- Tone: concise, action-driven. Keep the tree tidy — delete files and docs
+  that are no longer needed.
+
+## Personal projects only
+
+Applies **only** in repos under `github.com/ignaciojimenez`. Anywhere else —
+an employer's repos above all — ignore this section.
+
+- Repos are **public portfolio**. Assume public; act accordingly. Personal
+  work, so no contribution workflows.
+- Default stack: **Cloudflare free tier** (Workers, Pages, KV, R2) +
+  GitHub; push → Cloudflare auto-deploys. `gh` and `wrangler` for everything.
+  Prefer simple, recognized free-tier providers.
+- Infrastructure is Ansible-managed, with Slack alerting and heartbeats.
+- **Task queue: Linear, team `PER`.** Linear is the queue; git is the
+  reasoning. An issue is one deliverable with an acceptance test; the
+  write-up stays in the repo's `docs/`. **`Todo` is the queue.** No project
+  = untriaged; `Backlog` *with* a project is shelved and not read.
+  `agent/*` is machine-owned; `needs/*` is what blocks it now, `kind/*` what
+  sort of work it is. **No `agent/*` label means it is mine**: an
+  unattended sweep never closes it; a session I asked to do the work may,
+  once verified. Unsure — comment and use `In Review`. Closing follows the
+  honesty rule: force the condition. Protocol: `dotfiles/docs/queue.md`.

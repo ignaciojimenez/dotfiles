@@ -17,6 +17,10 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 `--force` overwrites existing files (originals backed up to
 `~/.dotfiles_backup/<timestamp>/`).
 
+On an employer-managed Mac, add `--profile work` once — it is remembered. It
+skips personal-only packages and settings and requires a work git identity:
+see [`docs/work-host.md`](docs/work-host.md).
+
 ## What you get
 
 - **zsh config** (`thefiles/.zshrc`, `.zsh_options`, `.zsh_keys`) — history, completion,
@@ -29,8 +33,11 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
   before ansible runs, so parallel forks multiplex through warm sessions instead of
   triggering concurrent TouchID prompts. Delegates host enumeration to
   `ansible --list-hosts`.
-- **Declarative package install** (`thefiles/Brewfile`) — `brew bundle` over scripted
-  `brew install`. Idempotent.
+- **Declarative package install** (`thefiles/Brewfile`, plus `Brewfile.personal` off
+  work hosts) — `brew bundle` over scripted `brew install`. Idempotent.
+- **Layered git identity** (`thefiles/.gitconfig`) — personal by default, a host email
+  from untracked `~/.gitconfig.local`, and always personal in repos under my GitHub
+  account.
 - **Portable AI agent context** (all platforms) — `agent-context/AGENTS.md` is one
   canonical personal-context file, symlinked into every agent harness's global
   config path by `bootstrap.sh`. Budgeted at 6,000 characters so it fits the
@@ -59,7 +66,10 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 ├── harness/claude/          per-harness config with no cross-harness standard
 │   └── settings.json        tracked whole, linked writable so /config lands in git
 ├── thefiles/                everything that gets symlinked
-│   ├── Brewfile             declarative brew bundle
+│   ├── Brewfile             declarative brew bundle, every profile
+│   ├── Brewfile.personal    tap, casks, homelab/network tools — personal profile only
+│   ├── .gitconfig           shared git config; identity layered via includes
+│   ├── .gitconfig.personal  personal identity
 │   ├── .ansible_preauth     SSH ControlMaster pre-warmup wrapper
 │   ├── .security            SSH agent + ansible vault config
 │   ├── .shell_options       shell-agnostic options, sourced by .zsh_options
@@ -74,6 +84,7 @@ Re-run `./bootstrap.sh` (no `-k`) to refresh symlinks. `--dry-run` previews,
 ├── AGENTS.md                conventions / non-obvious bits for AI coding agents
 └── docs/
     ├── decisions.md         architectural-call log (newest first; includes known to-dos)
+    ├── work-host.md         the work profile, and the checks owed on a work laptop
     └── agent-sessions.md    how session restore decides what to reopen, and why
 ```
 
@@ -113,4 +124,5 @@ relative, so the clone can live anywhere and the running user's name doesn't mat
 
 - [`docs/decisions.md`](docs/decisions.md) — architectural calls + known to-dos
 - [`docs/agent-sessions.md`](docs/agent-sessions.md) — agent session restore
+- [`docs/work-host.md`](docs/work-host.md) — running on an employer-managed Mac
 - [`AGENTS.md`](AGENTS.md) — non-obvious bits for AI coding agents
