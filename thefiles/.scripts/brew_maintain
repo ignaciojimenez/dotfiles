@@ -11,7 +11,6 @@ export HOMEBREW_NO_INSTALL_CLEANUP=1  # Avoid cleanup prompts
 export HOMEBREW_NO_ENV_HINTS=1        # Avoid environment hints
 export HOMEBREW_NO_ANALYTICS=1        # Disable analytics prompts
 export NONINTERACTIVE=1               # General non-interactive mode
-export HOMEBREW_EVAL_ALL=1           # Enable evaluation for audit
 
 echo -e "${GREEN}=> Checking Homebrew installation...${NC}"
 if ! command -v brew &> /dev/null; then
