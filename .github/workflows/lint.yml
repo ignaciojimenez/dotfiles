@@ -35,6 +35,7 @@ jobs:
             thefiles/.shell_options \
             thefiles/.scripts/brew_maintain \
             thefiles/.scripts/ansible-vault-pass \
+            scripts/test-ansible-preauth.sh \
             agent-context/cloud-setup.sh
 
   shell-syntax:
@@ -56,7 +57,8 @@ jobs:
                    thefiles/.security \
                    thefiles/.shell_options \
                    thefiles/.scripts/brew_maintain \
-                   thefiles/.scripts/ansible-vault-pass; do
+                   thefiles/.scripts/ansible-vault-pass \
+                   scripts/test-ansible-preauth.sh; do
             bash -n "$f" && echo "ok: $f"
           done
 
@@ -66,6 +68,18 @@ jobs:
                    thefiles/.zsh_options thefiles/.zsh_keys; do
             zsh -n "$f" && echo "ok: $f"
           done
+
+  ansible-preauth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # Pinned to the ansible-core the test was last verified against locally.
+      - name: Install zsh and ansible-core
+        run: |
+          sudo apt-get update && sudo apt-get install -y zsh
+          pipx install ansible-core==2.21.4
+      - name: Warm-up and Ansible share a socket
+        run: scripts/test-ansible-preauth.sh
 
   brewfile:
     runs-on: macos-latest

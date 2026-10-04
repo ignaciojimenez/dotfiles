@@ -1,14 +1,27 @@
 #!/bin/bash
 # Pre-warm SSH ControlMaster sessions before Ansible runs.
 #
-# Why: ansible's parallel forks can fire 5+ concurrent SSH connections,
-# each triggering a TouchID prompt. With this wrapper, hosts are warmed
-# sequentially up front (one calm TouchID prompt per host); ansible's
-# subsequent forks multiplex through the warm masters with no further
-# prompts.
+# Why: ansible's parallel forks can fire 5+ concurrent SSH connections, and
+# with a key that wants a touch per signature (touchid-agent here; Secretive,
+# yubikey-agent and FIDO -sk keys behave alike) each one prompts. With this
+# wrapper, hosts are warmed sequentially up front (one calm prompt per host);
+# ansible's forks then multiplex through the warm masters.
 #
-# Approach: delegate host enumeration to ansible itself via
-# `--list-hosts`. By definition the result matches the run that follows.
+# That holds only if the warm-up uses the ControlPath ansible will, and by
+# default it does not: ansible passes its own hashed path, overriding
+# ~/.ssh/config. So the path comes from ansible's effective settings
+# (`ansible-config`, from the directory the run starts in):
+#   ssh_args sets ControlPath       -> warm that path
+#   control_path is set             -> warm that path
+#   ssh_args sets only              -> ansible would hash one: pick one, and
+#     ControlPersist (the default)     hand it to this run alone
+#   neither                         -> ansible adds no ControlPath; both use
+#                                      ~/.ssh/config
+# Not covered: ansible_ssh_args / ansible_control_path set as host or extra
+# vars, which override ansible.cfg per host.
+#
+# Hosts come from ansible itself via `--list-hosts`, so they match the run
+# that follows. Tested by scripts/test-ansible-preauth.sh.
 
 # Extract hostnames from `ansible[-playbook] --list-hosts` output.
 # Both formats put hostnames as indented bare tokens; group / play /
@@ -18,13 +31,58 @@ __preauth_extract_hosts() {
   awk '/^[[:space:]]+[A-Za-z0-9._-]+$/ {gsub(/^[[:space:]]+/,""); print}'
 }
 
+# <dump> <option>: the option's value in `ansible-config dump` text, whose
+# lines read `name(origin) = value`. None comes back empty.
+__preauth_setting() {
+  local v
+  v=$(printf '%s\n' "$1" | sed -n "s/^${2}([^)]*) = //p" | head -n 1)
+  [[ "$v" == None ]] || printf '%s' "$v"
+}
+
+# <ssh args> <option>: that -o option's value, matched case-insensitively as
+# ansible does.
+__preauth_ssh_opt() {
+  printf '%s\n' "$1" | grep -o -i -E "${2}[= ][^ ]+" | head -n 1 |
+    sed -E 's/^[^= ]+[= ]//' | tr -d "\"'"
+}
+
+# Sets, in the calling ansible_preauth's scope, preauth_ssh (the -o options
+# that make the warm-up use ansible's ControlPath) and preauth_cp (the path
+# for this run's ANSIBLE_SSH_CONTROL_PATH, when this picks it).
+__preauth_control_path() {
+  # Not "path": zsh ties that name to $PATH.
+  local dump args socket persist dir
+  dump=$(command ansible-config dump -t connection ssh 2>/dev/null </dev/null) || return 1
+  [[ -n "$dump" ]] || return 1
+  args=$(__preauth_setting "$dump" ssh_args)
+  socket=$(__preauth_ssh_opt "$args" ControlPath)
+  persist=$(__preauth_ssh_opt "$args" ControlPersist)
+  if [[ -z "$socket" && -n "$persist" ]]; then
+    dir=$(__preauth_setting "$dump" control_path_dir)
+    dir="${dir/#\~/$HOME}"
+    socket=$(__preauth_setting "$dump" control_path)
+    if [[ -z "$socket" ]]; then
+      # %C hashes host, port and user, as ansible's own name does. Ansible
+      # %-formats the setting, hence %%.
+      socket="$dir/%C"
+      preauth_cp="$dir/%%C"
+    else
+      socket="${socket//\%\(directory\)s/"$dir"}"
+      socket="${socket//\%\%/%}"
+    fi
+    (umask 077 && mkdir -p "$dir") || return 1
+  fi
+  [[ -z "$socket" ]] ||
+    preauth_ssh=(-o ControlMaster=auto -o "ControlPath=$socket" -o "ControlPersist=${persist:-60s}")
+}
+
 # Warm one host: skip if its ControlMaster is already alive, else open
-# a daemonized -fN session (triggers exactly one TouchID prompt).
+# a daemonized -fN session (triggers exactly one prompt).
 __preauth_warm_host() {
   local h="$1"
   printf "  %-20s ... " "$h"
-  if ssh -O check "$h" 2>/dev/null; then echo "✓ cached"; return; fi
-  if ssh -fN -o ConnectTimeout=8 "$h" 2>/dev/null; then echo "✓"
+  if ssh "${preauth_ssh[@]}" -O check "$h" 2>/dev/null; then echo "✓ cached"; return; fi
+  if ssh "${preauth_ssh[@]}" -fN -o ConnectTimeout=8 "$h" 2>/dev/null; then echo "✓"
   else echo "✗"; fi
 }
 
@@ -43,15 +101,29 @@ __preauth_should_skip() {
   return 1
 }
 
+# <ansible|ansible-playbook> <args...>: warm, then run. A path picked here
+# goes to this one run, never into the shell.
 ansible_preauth() {
   local cmd="$1"; shift
-  __preauth_should_skip "$@" && return 0
-  local hosts
-  hosts=$(command "$cmd" "$@" --list-hosts 2>/dev/null | __preauth_extract_hosts)
-  [[ -z "$hosts" ]] && return 0
-  echo "🔐 Pre-authenticating SSH sessions for Ansible..."
-  while IFS= read -r h; do __preauth_warm_host "$h"; done <<< "$hosts"
+  local hosts h preauth_cp=""
+  local -a preauth_ssh=()
+  if ! __preauth_should_skip "$@"; then
+    hosts=$(command "$cmd" "$@" --list-hosts 2>/dev/null </dev/null | __preauth_extract_hosts)
+  fi
+  if [[ -z "$hosts" ]]; then
+    :
+  elif ! __preauth_control_path; then
+    echo "🔐 Could not read ansible's SSH settings; not pre-authenticating." >&2
+  else
+    echo "🔐 Pre-authenticating SSH sessions for Ansible..."
+    while IFS= read -r h; do __preauth_warm_host "$h"; done <<< "$hosts"
+  fi
+  if [[ -n "$preauth_cp" ]]; then
+    ANSIBLE_SSH_CONTROL_PATH="$preauth_cp" command "$cmd" "$@"
+  else
+    command "$cmd" "$@"
+  fi
 }
 
-ansible()          { ansible_preauth ansible          "$@"; command ansible          "$@"; }
-ansible-playbook() { ansible_preauth ansible-playbook "$@"; command ansible-playbook "$@"; }
+ansible()          { ansible_preauth ansible          "$@"; }
+ansible-playbook() { ansible_preauth ansible-playbook "$@"; }
