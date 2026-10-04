@@ -73,14 +73,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # Pinned to the ansible-core the test was last verified against locally.
-      # --force: the runner image ships its own, which pipx otherwise keeps.
+      # Pinned to the ansible-core the test was last verified against locally,
+      # in a venv of our own: the image ships one, root-owned, that pipx can
+      # neither replace nor be relied on to match.
       - name: Install zsh and ansible-core
         run: |
           sudo apt-get update && sudo apt-get install -y zsh
-          pipx install --force ansible-core==2.21.4
+          python3 -m venv "$RUNNER_TEMP/ansible"
+          "$RUNNER_TEMP/ansible/bin/pip" install --quiet ansible-core==2.21.4
+          echo "$RUNNER_TEMP/ansible/bin" >> "$GITHUB_PATH"
       - name: Warm-up and Ansible share a socket
-        run: scripts/test-ansible-preauth.sh
+        run: |
+          ansible --version | head -n 1 | grep -F 'core 2.21.4'
+          scripts/test-ansible-preauth.sh
 
   brewfile:
     runs-on: macos-latest
