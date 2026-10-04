@@ -288,11 +288,6 @@ create_symlinks() {
     # Gemini CLI is pointed at the AGENTS.md adapter above instead, via
     # `context.fileName` in ~/.gemini/settings.json — see README.
 
-    # Agent session tracking (docs/agent-sessions.md). Claude Code loads any
-    # folder under ~/.claude/skills/ that carries a plugin manifest, hooks
-    # included, with no install step — so its adapter is one more link.
-    link_with_backup "${SCRIPT_DIR}/agent-sessions/claude" "$HOME/.claude/skills/agent-sessions"
-
     # Per-harness behaviour (docs/decisions.md, 2026-09-19). Settings have no
     # cross-harness standard, so each harness gets its own tracked file under
     # harness/<name>/. The link is writable on purpose: a /model or /config

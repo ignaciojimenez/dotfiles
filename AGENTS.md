@@ -95,13 +95,13 @@ change lands in the working tree instead of drifting untracked. Check
 
 ### Agent sessions
 
-`agent-sessions/claude/` is a Claude Code plugin with no marketplace:
-`bootstrap.sh` links it to `~/.claude/skills/agent-sessions`, and Claude Code
-loads any plugin manifest found there, hooks included. Its hooks call
-`~/.scripts/agent-sessions`, so both links must exist — `validate.sh` asserts
-both. The link points at the working tree, so the plugin follows whatever
-branch is checked out. Behaviour and the evidence behind it:
-`docs/agent-sessions.md`; the contract test is `scripts/test-agent-sessions.sh`.
+Its own repo since 2026-10-04:
+[agent-sessions](https://github.com/ignaciojimenez/agent-sessions) — code,
+tests and the evidence behind each rule live there, not here. This repo only
+installs it: `env_bootstrap.sh` (`--kickstart`) clones it
+beside this repo and runs its `install.sh`, which links it into `~/.local/bin`
+and its Claude Code adapter into `~/.claude/skills/`. `validate.sh` asks
+Claude Code whether it actually loads the adapter.
 
 ### Linux fallback
 

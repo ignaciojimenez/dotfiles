@@ -47,8 +47,6 @@ BASH_FILES=(
   thefiles/.shell_tools
   thefiles/.scripts/brew_maintain
   thefiles/.scripts/ansible-vault-pass
-  thefiles/.scripts/agent-sessions
-  scripts/test-agent-sessions.sh
 )
 
 ZSH_FILES=(
@@ -211,36 +209,20 @@ else
 fi
 
 # ─── 7. Agent sessions ───────────────────────────────────────────────────────
-# The contract test replays real hook payload shapes through the tracker. The
-# wiring check asks what the 2026-09-18 failure taught: not whether the files
-# look right, but whether Claude Code would actually load them.
+# Its own repo since 2026-10-04 (github.com/ignaciojimenez/agent-sessions),
+# installed by --kickstart. The 2026-09-18 lesson still
+# holds: ask Claude Code whether it loads the adapter, not whether the link
+# exists.
 section "agent sessions"
-if command -v jq >/dev/null && command -v git >/dev/null; then
-  if out=$(scripts/test-agent-sessions.sh 2>&1); then
-    ok "contract test ($(tail -n 1 <<<"$out" | sed 's/^ *//'))"
-  else
-    fail "contract test"
-    echo "$out" | sed 's/^/    /'
-  fi
+if [[ ! -L "$HOME/.local/bin/agent-sessions" ]]; then
+  skip "agent-sessions (not installed: ./bootstrap.sh --kickstart)"
+elif ! command -v claude >/dev/null || ! command -v jq >/dev/null; then
+  skip "agent-sessions Claude adapter (needs claude and jq)"
+elif claude plugin list --json 2>/dev/null |
+       jq -e '.[] | select(.id == "agent-sessions@skills-dir" and .enabled)' >/dev/null; then
+  ok "agent-sessions installed, and Claude Code loads its adapter"
 else
-  skip "contract test (needs jq and git)"
-fi
-if ! readlink -f / >/dev/null 2>&1; then
-  skip "agent-sessions wiring (readlink -f unavailable)"
-elif [[ ! -e "$HOME/.agent-context" ]]; then
-  skip "agent-sessions wiring (bootstrap has not run on this machine)"
-else
-  plugin="$HOME/.claude/skills/agent-sessions"
-  got="$(readlink -f "$plugin" 2>/dev/null || true)"
-  hook="$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$plugin/hooks/hooks.json" 2>/dev/null |
-          sed -E 's/^"([^"]*)".*/\1/; s|\$HOME|'"$HOME"'|')"
-  if [[ "$got" != "$ROOT/agent-sessions/claude" ]]; then
-    fail "${plugin/#$HOME/~} -> ${got:-(missing)}, expected ./agent-sessions/claude"
-  elif [[ ! -x "$hook" ]]; then
-    fail "hook command ${hook:-(unreadable)} is not executable"
-  else
-    ok "agent-sessions plugin linked into ~/.claude/skills, hook command executable"
-  fi
+  fail "agent-sessions installed, but Claude Code does not load its adapter (re-run its install.sh)"
 fi
 
 # ─── 8. Brewfile parses + check ──────────────────────────────────────────────

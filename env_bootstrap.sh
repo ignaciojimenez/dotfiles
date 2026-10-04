@@ -2,7 +2,7 @@
 # Environment bootstrap — sourced by bootstrap.sh -k.
 # Usage: source env_bootstrap.sh <macos|unix>
 #
-# macos: Homebrew + Brewfile + macOS defaults + scheduled brew_maintain
+# macos: Homebrew + Brewfile + agent-sessions + macOS defaults + scheduled brew_maintain
 # unix:  no-op for now (step 3 of docs/improvement-plan.md will fill this in
 #        with a Linux-on-zsh experience: gpg-agent socket, Linux package install)
 
@@ -45,6 +45,27 @@ install_packages() {
   fi
   echo "==> Installing/refreshing packages from $brewfile"
   brew bundle --file="$brewfile"
+}
+
+# agent-sessions (github.com/ignaciojimenez/agent-sessions) reopens the agent
+# sessions a reboot closed. Its own repo: cloned beside this one, then its
+# install.sh links it into ~/.local/bin and wires the agent CLIs present.
+# An existing clone is left as it is; `git pull` there is the update.
+install_agent_sessions() {
+  local script_dir dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+  dir="$(dirname "$script_dir")/agent-sessions"
+  if [[ ! -e "$dir" ]]; then
+    echo "==> Cloning agent-sessions into $dir"
+    git clone --quiet https://github.com/ignaciojimenez/agent-sessions.git "$dir" \
+      || { echo "agent-sessions clone failed" >&2; return 1; }
+  fi
+  if [[ ! -x "$dir/install.sh" ]]; then
+    echo "==> $dir is not an agent-sessions clone — skipping" >&2
+    return 1
+  fi
+  echo "==> Installing agent-sessions"
+  "$dir/install.sh"
 }
 
 deploy_macos_usability_settings() {
@@ -147,6 +168,7 @@ deploy_macos_security_settings() {
 macos() {
   install_homebrew
   install_packages
+  install_agent_sessions
   deploy_macos_security_settings
   deploy_macos_usability_settings
 }
