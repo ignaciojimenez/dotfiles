@@ -2,6 +2,10 @@
 
 One-liner record of architecture/strategy calls. Newest first.
 
+## 2026-10-04
+
+- **`agent-restore` reopens unnamed sessions the agent answered in.** "Name it or lose it" depended on remembering, and a day of infrastructure work was skipped after a reboot because it never got a `/rename`. The `Reopen?` prompt already filters noise, so the name was a second, silent filter dropping real work. Unnamed sessions with no assistant turn — opened and closed, or `/clear` only — are still skipped. Cost: an unnamed probe killed by a reboot now appears in the plan, to be declined there.
+
 ## 2026-09-20
 
 - **Claude Code reads `AGENTS.md`, so every `CLAUDE.md` in the estate whose only job was renaming it is deleted.** 2.1.278 ships the `agents-md` built-in plugin: a project with no `CLAUDE.md` of its own gets its `AGENTS.md` loaded in the same place, with the same framing and the same omission rules. The importers carried no content — `dotfiles/.claude/CLAUDE.md`, `infrastructure-automation/CLAUDE.md` (`@AGENTS.md`), the `recordsdelmundo-site-static` symlink — and are gone. `~/.claude/CLAUDE.md` now links straight to `agent-context/AGENTS.md`, exactly like the other four adapters, so Claude Code stops being a special case and becomes a filename.
