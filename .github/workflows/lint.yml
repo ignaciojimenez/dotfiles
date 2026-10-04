@@ -74,10 +74,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       # Pinned to the ansible-core the test was last verified against locally.
+      # --force: the runner image ships its own, which pipx otherwise keeps.
       - name: Install zsh and ansible-core
         run: |
           sudo apt-get update && sudo apt-get install -y zsh
-          pipx install ansible-core==2.21.4
+          pipx install --force ansible-core==2.21.4
       - name: Warm-up and Ansible share a socket
         run: scripts/test-ansible-preauth.sh
 
