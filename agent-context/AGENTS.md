@@ -47,7 +47,11 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
   is, size is the estimate field. **No `agent/*` label means it is
   mine: an unattended sweep never closes it; a session I asked to do the work
   may, once it has verified. Unsure — comment and use `In Review`.**
-- Closing is subject to the honesty rule below: force the condition.
+- Closing follows the honesty rule: force the condition.
+- **Article ideas.** When work turns up something worth telling others — a
+  non-obvious finding, a reusable pattern, a tool — suggest it in one line.
+  On a yes, file it in project `Writing`, status `Backlog`, linking the repo
+  docs that hold the evidence.
 
 Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
 
@@ -94,27 +98,22 @@ Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
 
 - Simple feature branches. Only commit work from the current conversation
   scope; never stage out-of-scope files.
-- Never hardcode secrets — env vars or secret managers.
-- Signing is opt-in attestation, not a default. `commit.gpgSign=false`
-  globally; the signing key (`touchid-agent-sign`) is touch-required, so each
-  `-S` is one Touch ID prompt meaning "human present, human approved". Don't
-  add `-S` to routine commits — sign at meaningful moments only: merges to
-  main (`git ms`), release tags (`git ts`).
+- Signing is opt-in attestation, not a default: each `-S` is one Touch ID
+  prompt meaning "human present, human approved". Don't sign routine
+  commits — only merges to main (`git ms`) and release tags (`git ts`).
 
 ## Security (my profession — flag things)
 
 - Security-first across architecture, config and code. Never hardcode
-  secrets. Assume every repo is public.
+  secrets — env vars or secret managers. Assume every repo is public.
 - Secure defaults everywhere: repo settings, cloud config, access controls,
   permissions. Least privilege when in doubt.
 - Flag security trade-offs explicitly; don't silently accept weak configs.
 
 ## Documentation
 
-- README: minimal — project intent and how to use it, nothing more.
-- Detailed docs in `docs/`, linked from the README.
+- README: minimal — intent and how to use it. Detail in `docs/`, linked.
 - Maintain `docs/decisions.md`: one-liner architecture/strategy calls,
   newest first.
-- Tone: concise, action-driven.
-- Keep the tree tidy — clean up files and docs that are no longer needed
-  rather than leaving them around.
+- Tone: concise, action-driven. Keep the tree tidy — delete files and docs
+  that are no longer needed.
