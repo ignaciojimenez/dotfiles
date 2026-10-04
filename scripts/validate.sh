@@ -47,6 +47,7 @@ BASH_FILES=(
   thefiles/.shell_tools
   thefiles/.scripts/brew_maintain
   thefiles/.scripts/ansible-vault-pass
+  scripts/test-ansible-preauth.sh
 )
 
 ZSH_FILES=(
@@ -225,7 +226,22 @@ else
   fail "agent-sessions installed, but Claude Code does not load its adapter (re-run its install.sh)"
 fi
 
-# ─── 8. Brewfile parses + check ──────────────────────────────────────────────
+# ─── 8. Ansible preauth ──────────────────────────────────────────────────────
+# Runs Ansible against a stub ssh: the warm-up must open the socket Ansible
+# then reuses, or every touch happens twice.
+section "ansible preauth"
+if command -v ansible >/dev/null && command -v zsh >/dev/null; then
+  if out=$(scripts/test-ansible-preauth.sh 2>&1); then
+    ok "warm-up and Ansible share a socket ($(tail -n 1 <<<"$out"))"
+  else
+    fail "warm-up and Ansible do not share a socket"
+    echo "$out" | grep -v '✓' | sed 's/^/    /'
+  fi
+else
+  skip "ansible preauth test (needs ansible and zsh)"
+fi
+
+# ─── 9. Brewfile parses + check ──────────────────────────────────────────────
 if [[ "$QUICK" -eq 0 ]]; then
   section "Brewfile (read-only)"
   if [[ -f thefiles/Brewfile ]]; then
