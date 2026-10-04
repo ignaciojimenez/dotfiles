@@ -4,6 +4,7 @@ One-liner record of architecture/strategy calls. Newest first.
 
 ## 2026-10-04
 
+- **agent-sessions is its own repo; this one only installs it.** Others can use it, and the plugin used to be linked from this working tree, so it followed whatever branch was checked out. `--kickstart` clones it beside this repo and runs its `install.sh`. Extracting it surfaced a bug the old setup had too: `claude -p` from a terminal was recorded as a session to reopen.
 - **`agent-restore` reopens unnamed sessions the agent answered in.** "Name it or lose it" depended on remembering, and a day of infrastructure work was skipped after a reboot because it never got a `/rename`. The `Reopen?` prompt already filters noise, so the name was a second, silent filter dropping real work. Unnamed sessions with no assistant turn — opened and closed, or `/clear` only — are still skipped. Cost: an unnamed probe killed by a reboot now appears in the plan, to be declined there.
 
 ## 2026-09-20
