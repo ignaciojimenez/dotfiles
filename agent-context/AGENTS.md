@@ -48,10 +48,10 @@ Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
   mine: an unattended sweep never closes it; a session I asked to do the work
   may, once it has verified. Unsure — comment and use `In Review`.**
 - Closing follows the honesty rule: force the condition.
-- **Article ideas.** When work turns up something worth telling others — a
-  non-obvious finding, a reusable pattern, a tool — suggest it in one line.
-  On a yes, file it in project `Writing`, status `Backlog`, linking the repo
-  docs that hold the evidence.
+- **Article ideas.** Pitch at my altitude: the lesson or abstraction other
+  leaders value, never the specific bug (that is evidence, not the topic).
+  One line; on a yes, file it in project `Writing`, status `Backlog`,
+  linking the repo docs that hold the evidence.
 
 Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
 
