@@ -272,14 +272,25 @@ holds data, never logic, so the exit is still an export. A sweep that could
 not see everything opens but never closes. Rules and reasons are in its
 `docs/decisions.md`.
 
+**agent-lxc** has written `agent/fleet` since 2026-10-11 (PER-85), using the
+same marker convention:
+- A deterministic filer runs hourly and turns each Tier 1 sweep finding into
+  one issue per `host.subject` key.
+- It closes an issue after 24 h absent, counted only on sweeps that could see
+  the host.
+- The model never writes to Linear. Tier 2's plan arrives as a comment that
+  the filer posts, which is how "may comment, never open" is enforced rather
+  than promised.
+
+Operator detail is in `infrastructure-automation/docs/AGENT_LXC.md`.
+
 ## Not built yet
 
 Recorded so no agent assumes otherwise:
 
-- **Nothing writes `agent/fleet`.** The agent-lxc fleet source is designed
-  and unbuilt; every fleet issue is still created by hand.
-- agent-lxc Tier 2 judgement, which may comment on a state issue but never
-  open its own.
+- **Nothing acts on `agent/fleet` issues yet.** agent-lxc files them (see
+  above). The builder that would pick one up and open a draft PR is PER-85
+  part 2.
 - Scanner intake stays **poll-and-reconcile, never push**. An event cannot
   retract, and a finding that outlives its condition is the exact failure this
   system exists to prevent.
