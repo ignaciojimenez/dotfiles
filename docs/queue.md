@@ -284,13 +284,28 @@ same marker convention:
 
 Operator detail is in `infrastructure-automation/docs/AGENT_LXC.md`.
 
+## What acts on this queue
+
+**The workbench builder** has picked up `agent/fleet` issues since 2026-10-11
+(PER-85 part 2):
+- An hourly poller takes a `Todo` issue that carries a Tier 2 plan and hands it
+  to `claude -p`. The model runs with no shell, no MCP, and an account with no
+  claude.ai login.
+- The harness runs the unit tests and the container rig, then opens a **draft**
+  PR as `ignaciojimenez-builder`. `main` refuses that identity, so a human
+  merges.
+- It makes 2 attempts per issue, then opens a `[hand-back]` draft. It holds a
+  read-only Linear key: the agent-lxc filer posts the PR link on the issue.
+- First live run 2026-10-12: PER-117 → PR #17, $0.10, first attempt.
+
+Operator detail is in `infrastructure-automation/docs/WORKBENCH.md`.
+
 ## Not built yet
 
 Recorded so no agent assumes otherwise:
 
-- **Nothing acts on `agent/fleet` issues yet.** agent-lxc files them (see
-  above). The builder that would pick one up and open a draft PR is PER-85
-  part 2.
+- **The builder works only `agent/fleet`, in one repo.** Widening it to other
+  labels or repos is the PER-85 decision due 2026-10-25.
 - Scanner intake stays **poll-and-reconcile, never push**. An event cannot
   retract, and a finding that outlives its condition is the exact failure this
   system exists to prevent.
