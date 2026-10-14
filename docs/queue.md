@@ -42,7 +42,7 @@ cheap.
 
 Four groups, each answering a different question. Groups are mutually exclusive
 in Linear, which is the point: an issue has one owner, one current blocker, one
-kind, one model tier.
+kind, one model tier. One standalone label, `builder`, sits outside them (below).
 
 ### `agent/*` — who may close it
 
@@ -56,6 +56,25 @@ Removing an `agent/*` label is the **adopt** gesture: it moves the issue from th
 machine to a human and auto-close stops applying.
 
 `agent/*` issues **never notify**. `#home-alerts` pages; the tracker does not.
+
+### `builder` — hand it to the unattended builder
+
+A standalone label, deliberately **not** in the `agent` group: that group means
+machine-owned and auto-closing, and a request stays Ignacio's. On a `Todo`
+issue it means "the workbench builder may take this" (since 2026-10-14):
+
+- **The description is the spec.** Comments are never read, so only an edit to
+  the description changes what gets built. An empty description waits.
+- Write it as for any issue: the outcome, and the acceptance test. The builder
+  declines rather than guesses, and its hand-back says what the description
+  would need.
+- Its draft PR links the issue (`<type>(PER-<n>)`), so the merge moves it to
+  Done. That is right here, because the merge is Ignacio accepting the work.
+  It is wrong for `agent/fleet`, whose PRs stay unlinked.
+- Same limits as a fault: one repo (`infrastructure-automation`), small diffs,
+  no vault, CI, inventory or `docs/local/` paths, and a human merges.
+
+An issue carrying both `builder` and `agent/fleet` is treated as a fault.
 
 ### `needs/*` — what blocks it right now
 
@@ -287,15 +306,17 @@ Operator detail is in `infrastructure-automation/docs/AGENT_LXC.md`.
 ## What acts on this queue
 
 **The workbench builder** has picked up `agent/fleet` issues since 2026-10-11
-(PER-85 part 2):
-- An hourly poller takes a `Todo` issue that carries a Tier 2 plan and hands it
-  to `claude -p`. The model runs with no shell, no MCP, and an account with no
-  claude.ai login.
+(PER-85 part 2), and `builder` issues since 2026-10-14:
+- An hourly poller takes a `Todo` issue that is ready and hands it to
+  `claude -p`. A fault is ready once it carries a Tier 2 plan; a `builder`
+  request is ready at once. The model runs with no shell, no MCP, and an
+  account with no claude.ai login.
 - The harness runs the unit tests and the container rig, then opens a **draft**
   PR as `ignaciojimenez-builder`. `main` refuses that identity, so a human
   merges.
 - It makes 2 attempts per issue, then opens a `[hand-back]` draft. It holds a
-  read-only Linear key: the agent-lxc filer posts the PR link on the issue.
+  read-only Linear key. On a fault the agent-lxc filer posts the PR link; on a
+  request the PR title links it.
 - First live run 2026-10-12: PER-117 → PR #17, $0.10, first attempt.
 
 Operator detail is in `infrastructure-automation/docs/WORKBENCH.md`.
@@ -304,8 +325,8 @@ Operator detail is in `infrastructure-automation/docs/WORKBENCH.md`.
 
 Recorded so no agent assumes otherwise:
 
-- **The builder works only `agent/fleet`, in one repo.** Widening it to other
-  labels or repos is the PER-85 decision due 2026-10-25.
+- **The builder works in one repo, `infrastructure-automation`.** Widening it
+  to other repos is the PER-85 decision due 2026-10-25.
 - Scanner intake stays **poll-and-reconcile, never push**. An event cannot
   retract, and a finding that outlives its condition is the exact failure this
   system exists to prevent.
