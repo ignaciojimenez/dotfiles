@@ -66,5 +66,6 @@
       "routine under ansible/ prefix: ansible-playbook, ansible-lint, ansible-inventory, ansible-vault, ansible-galaxy usage within infrastructure-automation's ansible/ directory is routine per its AGENTS.md workflows"
     ]
   },
+  "autoUpdatesChannel": "stable",
   "voiceEnabled": true
 }

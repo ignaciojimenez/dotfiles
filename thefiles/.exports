@@ -23,3 +23,8 @@ export GPG_TTY=$(tty);
 
 # Starship config — top-level so bootstrap.sh's symlink whitelist owns it.
 export STARSHIP_CONFIG="$HOME/.starship.toml"
+
+# Third-party packages wait 20 days after release (AGENTS.md, Security): a
+# compromised or broken release has time to be pulled first. pip >= 26.2
+# honours it for every dependency it resolves; older pips ignore it silently.
+export PIP_UPLOADED_PRIOR_TO=P20D
