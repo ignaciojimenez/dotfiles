@@ -1,13 +1,9 @@
 # AGENTS.md — Ignacio Jiménez
 
-Portable, agent-neutral context: who I am and how I work. Applies to every
-project on this machine, in every agent harness.
+Who I am and how I work: every project, every agent harness.
 
-Canonical source: `dotfiles/agent-context/AGENTS.md`. `bootstrap.sh` links it
-into each harness's global-config path — the copies under `~` are symlinks
-back here, so edit this file, never those.
-
-Budget: **under 6,000 characters** (the Windsurf global-rules cap, enforced by
+Canonical: `dotfiles/agent-context/AGENTS.md`; the copies under `~` are
+symlinks to it, so edit this file. Budget **<6,000 characters** (Windsurf cap,
 `scripts/validate.sh`). No secrets — this repo is public.
 
 ## Who I am
@@ -77,7 +73,7 @@ Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
   POSIX where it costs nothing.
 - Default stack: **Cloudflare free tier** (Workers, Pages, KV, R2) +
   **GitHub**. Usual pattern: push to GitHub → auto-deploy via Cloudflare.
-- Use `gh` and `wrangler` for everything — no manual UI steps.
+- Use `gh` and `wrangler`.
 - Infrastructure is Ansible-managed, with Slack alerting for monitoring and
   heartbeats.
 - Prefer simple, recognized free-tier providers. Minimal dependencies — don't
@@ -92,7 +88,7 @@ Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
   becoming overkill.
 - Repos are **public portfolio** — elegant, well-structured, opinionated,
   pragmatic. Personal work, so no contribution workflows needed, but
-  presentation quality always matters. Assume public; act accordingly.
+  presentation quality always matters.
 
 ## Git discipline
 
@@ -106,14 +102,19 @@ Protocol, queries and what is not built yet: `dotfiles/docs/queue.md`.
 
 - Security-first across architecture, config and code. Never hardcode
   secrets — env vars or secret managers. Assume every repo is public.
-- Secure defaults everywhere: repo settings, cloud config, access controls,
-  permissions. Least privilege when in doubt.
+- Secure defaults everywhere (repos, cloud, access, permissions); least
+  privilege when in doubt.
 - Flag security trade-offs explicitly; don't silently accept weak configs.
+- Third-party packages wait **20 days** after release (pip
+  `uploaded-prior-to`, npm `min-release-age`, pnpm `minimumReleaseAge`,
+  Dependabot `cooldown`, Renovate `minimumReleaseAge`). Tooling floats under
+  it: no pin for me to bump, no bare `latest`. Security fixes may skip it,
+  flagged.
 
 ## Documentation
 
 - README: minimal — intent and how to use it. Detail in `docs/`, linked.
 - Maintain `docs/decisions.md`: one-liner architecture/strategy calls,
   newest first.
-- Tone: concise, action-driven. Keep the tree tidy — delete files and docs
-  that are no longer needed.
+- Tone: concise, action-driven. Keep the tree tidy; delete what is no
+  longer needed.
