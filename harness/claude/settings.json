@@ -1,6 +1,11 @@
 {
   "permissions": {
-    "defaultMode": "auto"
+    "defaultMode": "auto",
+    "allow": [
+      "mcp__linear-server__save_issue",
+      "mcp__linear-server__save_comment",
+      "mcp__linear-server__create_attachment"
+    ]
   },
   "model": "opus",
   "enabledPlugins": {
