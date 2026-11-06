@@ -1,14 +1,20 @@
 {
   "permissions": {
-    "defaultMode": "auto"
+    "defaultMode": "auto",
+    "allow": [
+      "mcp__linear-server__save_issue",
+      "mcp__linear-server__save_comment",
+      "mcp__linear-server__create_attachment"
+    ]
   },
-  "model": "sonnet",
+  "model": "opus",
   "enabledPlugins": {
     "commit-commands@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
     "slack@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true,
-    "cloudflare@cloudflare": true
+    "cloudflare@cloudflare": true,
+    "chrome-devtools-mcp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
@@ -19,6 +25,11 @@
     }
   },
   "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
   "voice": {
     "enabled": true,
     "mode": "hold"
