@@ -291,6 +291,13 @@ holds data, never logic, so the exit is still an export. A sweep that could
 not see everything opens but never closes. Rules and reasons are in its
 `docs/decisions.md`.
 
+**An `agent/sec` finding opens in `Todo`** (since 2026-11-06): it is read, not
+shelved. Before that, every finding took Linear's default, `Backlog`, and went
+unseen (PER-138, two weeks). The one exception opens in `Backlog`: an OSV finding
+the harness cannot rule out as build-time only, since OSV carries no scope.
+Build-time GitHub alerts stay silent, and an exploited one still pages. The status is set
+once, at creation; after that it is the human's, and no sweep moves it.
+
 **agent-lxc** has written `agent/fleet` since 2026-10-11 (PER-85), using the
 same marker convention:
 - A deterministic filer runs hourly and turns each Tier 1 sweep finding into
