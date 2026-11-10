@@ -333,7 +333,11 @@ Operator detail is in `infrastructure-automation/docs/WORKBENCH.md`.
 Recorded so no agent assumes otherwise:
 
 - **The builder works in one repo, `infrastructure-automation`.** Widening it
-  to other repos is the PER-85 decision due 2026-10-25.
+  was decided on 2026-11-10: `agent/sec` on `pastebin-worker` only, starting once
+  the review backlog is empty and test runs are shown to have no push
+  credential in reach (PER-176).
+- **A fault issue can close under an open builder PR.** The filer's 24 h
+  auto-close does not check for one, so the PR is orphaned (PER-177).
 - Scanner intake stays **poll-and-reconcile, never push**. An event cannot
   retract, and a finding that outlives its condition is the exact failure this
   system exists to prevent.
