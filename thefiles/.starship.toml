@@ -18,6 +18,10 @@ $cmd_duration\
 $line_break\
 $character"""
 
+# Default is 500ms. Version probes (lua -v, python --version) can exceed it
+# on the first prompt after login while the disk cache is cold.
+command_timeout = 1000
+
 [character]
 success_symbol = "[❯](green)"
 error_symbol   = "[❯](red)"
